@@ -1,5 +1,3 @@
-# p5 animation using midi pitch
-
 import mido, p5
 
 WIDTH = 1920
@@ -33,13 +31,7 @@ def draw():
     if current_message >= len(notes):
         current_message = STARTING_MSG
 
-def get_note_ons(track):
-    notes = []
-    for message in track:
-        if message.type == 'note_on':
-            print(message)
-            notes.append(message)
-    return notes
+get_note_ons = lambda track: list(filter(lambda message: message.type == 'note_on', track))
 
 x_pos = STARTING_X_POS
 mid = mido.MidiFile('midi/mario_raceway.mid')
