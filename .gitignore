@@ -13,5 +13,6 @@ __pycache__/
 # Logs
 *.log
 
-# Midi files
-midi/
+# Audio files
+midi
+wav/
