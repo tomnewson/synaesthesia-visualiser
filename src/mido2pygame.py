@@ -88,7 +88,7 @@ class Note:
     def update(self):
         """Update the note's position and state."""
         if self.active:
-            self.size += math.log10(self.size) * 0.5
+            self.size += math.log10(self.size) * 0.2
         else:
             self.size = max(0, self.size - CIRCLE_SCALE)  # Shrink after note ends
             self.opacity = max(0, self.opacity - 10)  # Fade out
@@ -109,12 +109,69 @@ class Note:
             int(self.opacity)
         )
         if self.channel < 5:
+            # woodwind
             pygame.draw.line(s, color, (0, 0), (s_size, s_size), int(self.size))
-        elif self.channel == 8 or self.channel == 9:
+        elif self.channel <= 7:
+            draw_inverse_cube(surface, self.x, self.y, self.size * 4, color)
+        elif self.channel == 8:
+            pygame.draw.line(s, color, (s_size, s_size), (0, 0), int(self.size))
+        elif self.channel <= 10:
+            # strings
             pygame.draw.rect(s, color, (0, 0, s_size, s_size))
         else:
             pygame.draw.circle(s, color, (s_size // 2, s_size // 2), int(self.size))
+
         surface.blit(s, (int(self.x - self.size), int(self.y - self.size)))
+
+def draw_inverse_cube(surface, x, y, size, color):
+    """Draws an inverse cube at the given position."""
+    cube_vertices = [
+        [-1, -1, -1],
+        [ 1, -1, -1],
+        [ 1,  1, -1],
+        [-1,  1, -1],
+        [-1, -1,  1],
+        [ 1, -1,  1],
+        [ 1,  1,  1],
+        [-1,  1,  1],
+    ]
+
+    edges = [
+        (0,1), (1,2), (2,3), (3,0),
+        (4,5), (5,6), (6,7), (7,4),
+        (0,4), (1,5), (2,6), (3,7),
+    ]
+
+    scale = size / 2
+    angle = pygame.time.get_ticks() * 0.001  # Rotate over time
+    rotation_matrix = [
+        [math.cos(angle), 0, math.sin(angle)],
+        [0, 1, 0],
+        [-math.sin(angle), 0, math.cos(angle)]
+    ]
+
+    def project(v):
+        x3d = v[0]
+        y3d = v[1]
+        z3d = v[2]
+
+        x_rot = x3d * rotation_matrix[0][0] + z3d * rotation_matrix[0][2]
+        y_rot = y3d
+        z_rot = x3d * rotation_matrix[2][0] + z3d * rotation_matrix[2][2]
+
+        factor = 5 / (z_rot + 5)
+        x_proj = x_rot * factor * scale + x
+        y_proj = y_rot * factor * scale + y
+
+        return (int(x_proj), int(y_proj))
+
+    # Transform and draw the edges
+    projected_vertices = [project(v) for v in cube_vertices]
+
+    for edge in edges:
+        start = projected_vertices[edge[0]]
+        end = projected_vertices[edge[1]]
+        pygame.draw.line(surface, color, start, end, 5) # TODO: fade out cube
 
 # Main function
 def main():
@@ -148,7 +205,7 @@ def main():
                 active_notes.append(Note(msg))
             elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
                 for note in active_notes:
-                    if note.note == msg.note and note.active:
+                    if note.note == msg.note and note.active and note.channel == msg.channel:
                         note.note_off()
                         break
             next_event_index += 1
