@@ -1,6 +1,7 @@
 import mido
 import pygame
 import sys
+import math
 
 # Initialize pygame
 pygame.init()
@@ -12,6 +13,7 @@ MIN_NOTE = 21   # A0 (first note on a standard 88-key piano)
 MAX_NOTE = 108  # C8 (last note on a standard 88-key piano)
 CIRCLE_SCALE = 0.5
 FILE_NAME = "5th-Symphony-Part-1"
+MAX_SIZE = 100
 
 # Create the display surface
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -67,12 +69,13 @@ class Note:
     """Represents a musical note in the visualization."""
     def __init__(self, msg):
         self.note = msg.note
+        self.channel = msg.channel
         self.start_time = elapsed_time
         self.end_time = None
         self.active = True
         self.finished = False
         self.x = remap(self.note, MIN_NOTE, MAX_NOTE, 0, WIDTH)
-        self.y = HEIGHT / (num_tracks + 1) * (msg.channel + 1)
+        self.y = HEIGHT / (num_tracks + 1) * (self.channel + 1)
         self.size = remap(msg.velocity, 0, 127, 10, 50) * CIRCLE_SCALE
         self.color = note_to_color(self.note)
         self.opacity = 255  # Pygame uses 0-255 for alpha
@@ -85,7 +88,7 @@ class Note:
     def update(self):
         """Update the note's position and state."""
         if self.active:
-            self.y -= 2  # Move upwards
+            self.size += math.log10(self.size) * 0.5
         else:
             self.size = max(0, self.size - CIRCLE_SCALE)  # Shrink after note ends
             self.opacity = max(0, self.opacity - 10)  # Fade out
@@ -98,14 +101,19 @@ class Note:
             return  # Skip drawing if the note is invisible
         s_size = int(self.size * 2)
         s = pygame.Surface((s_size, s_size), pygame.SRCALPHA)
-        # Ensure color components are integers between 0 and 255
+        # map color and opacity to pygame format
         color = (
             int(self.color[0]),
             int(self.color[1]),
             int(self.color[2]),
             int(self.opacity)
         )
-        pygame.draw.circle(s, color, (s_size // 2, s_size // 2), int(self.size))
+        if self.channel < 5:
+            pygame.draw.line(s, color, (0, 0), (s_size, s_size), int(self.size))
+        elif self.channel == 8 or self.channel == 9:
+            pygame.draw.rect(s, color, (0, 0, s_size, s_size))
+        else:
+            pygame.draw.circle(s, color, (s_size // 2, s_size // 2), int(self.size))
         surface.blit(s, (int(self.x - self.size), int(self.y - self.size)))
 
 # Main function
