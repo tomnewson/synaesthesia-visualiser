@@ -32,13 +32,18 @@ def note_to_color(note):
     color.hsva = (int(hue % 360), 100, 100, 100)  # Hue, Saturation, Value, Alpha
     return (color.r, color.g, color.b)
 
+def is_note_on(msg):
+    return msg.type == 'note_on' and msg.velocity > 0
+
+def is_note_off(msg):
+    return msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0)
+
 class Note:
     def __init__(self, msg, track):
         self.note = msg.note
         self.track = track
         self.start_time = elapsed_time
         self.active = True
-        self.finished = False
         self.x = remap(self.note, MIN_NOTE, MAX_NOTE, 0, WIDTH)
         self.y = remap(track, 0, num_tracks, 0, HEIGHT)
         self.size = remap(msg.velocity, 0, 127, 10, 50)
@@ -69,7 +74,7 @@ conversion_file_path = chordino.preprocess(args.midi_path)
 
 mid = mido.MidiFile(args.midi_path) # parse midi file
 num_tracks = len(mid.tracks)
-tracks = [[] for _ in range(num_tracks)]
+note_events = []
 
 # time is relative to the note before it
 # in the context of the entire midi file
@@ -89,7 +94,7 @@ for mid_i, mid_msg in enumerate(mid):
     for track_i in range(num_tracks):
         for track_msg_i, track_msg in enumerate(mid.tracks[track_i]):
             if mid_msg == track_msg:
-                tracks[track_i].append({'time': current_time, 'message': mid_msg})
+                note_events.append({'time': current_time, 'track': track_i, 'message': mid_msg})
                 mid.tracks[track_i].pop(track_msg_i)
                 break
 
@@ -105,13 +110,13 @@ pygame.mixer.music.play()
 clock = pygame.time.Clock()
 start_time = pygame.time.get_ticks() # in ms
 elapsed_time = 0
-active_note_tracks = [[] for _ in range(num_tracks)]
-next_event_indices = [0] * num_tracks
+active_notes = []
+next_event_index = 0
 
 running = True
 while running:
     clock.tick(FRAMERATE)
-    elapsed_time = (pygame.time.get_ticks() - start_time) / 1000 # in s
+    elapsed_time = (pygame.time.get_ticks() - start_time) / 1000 # convert to seconds
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -119,41 +124,28 @@ while running:
 
     screen.fill((0, 0, 0))
 
-    # for each track
-    # while track note events remain and track next event time <= elapsed time
-    # handle note
-
-    for track_i in range(num_tracks):
-        track = tracks[track_i]
-
-        # skip empty tracks
-        if next_event_indices[track_i] >= len(track):
-            continue
-
-        # print(f"track {i} time {track[next_event_indices[i]]['time']} elapsed {elapsed_time}")
-        # for each note in the track that occurs before/at the current time
-        # skip tracks that have no more events at this time
-        while next_event_indices[track_i] < len(track) and track[next_event_indices[track_i]]['time'] <= elapsed_time:
-            event = track[next_event_indices[track_i]]
-            msg = event['message']
-            if msg.type == 'note_on' and msg.velocity > 0:
-                active_note_tracks[track_i].append(Note(msg, track_i))
-            elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
-                for note in active_note_tracks[track_i]:
-                    if note.note == msg.note and note.active:
-                        note.note_off()
-                        break
-            next_event_indices[track_i] += 1
+    # Process MIDI events in sync with the playback
+    while next_event_index < len(note_events) and note_events[next_event_index]['time'] <= elapsed_time:
+        event = note_events[next_event_index]
+        msg = event['message']
+        track = event['track']
+        if is_note_on(msg):
+            active_notes.append(Note(msg, track))
+        else:
+            for note in active_notes:
+                if note.active and note.note == msg.note:
+                    note.note_off()
+                    break
+        next_event_index += 1
 
     # Update and draw active notes
-    for track in active_note_tracks:
-        for note in track[:]:
-            note.draw(screen)
-            if note.finished:
-                active_note_tracks.remove(note)
+    for note in active_notes[:]:
+        note.draw(screen)
+        if not note.active:
+            active_notes.remove(note)
 
     pygame.display.flip()
-    print(f"active notes: {sum((len(track) for track in active_note_tracks))}", end='  \r')
+    print(f"active notes: {len(active_notes)}", end='  \r')
 
 pygame.quit()
 
