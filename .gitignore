@@ -1,5 +1,5 @@
 # Virtual environment
-venv/
+venv*/
 
 # Python cache
 __pycache__/
@@ -14,5 +14,5 @@ __pycache__/
 *.log
 
 # Audio files
-midi
+midi/
 wav/

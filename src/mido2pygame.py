@@ -12,7 +12,7 @@ HEIGHT = 1080
 MIN_NOTE = 21   # A0 (first note on a standard 88-key piano)
 MAX_NOTE = 108  # C8 (last note on a standard 88-key piano)
 CIRCLE_SCALE = 0.5
-FILE_NAME = "5th-Symphony-Part-1"
+FILE_NAME = "messiaen_diptyque_part_I_(winitzki)"
 MAX_SIZE = 100
 
 # Create the display surface
@@ -79,20 +79,30 @@ class Note:
         self.size = remap(msg.velocity, 0, 127, 10, 50) * CIRCLE_SCALE
         self.color = note_to_color(self.note)
         self.opacity = 255  # Pygame uses 0-255 for alpha
+        self.rotation_progress = 0.0
+        self.rotation_start_time = None
 
     def note_off(self):
         """Handle the note-off event."""
         self.end_time = elapsed_time
         self.active = False
+        self.rotation_start_time = elapsed_time
 
     def update(self):
         """Update the note's position and state."""
         if self.active:
             self.size += math.log10(self.size) * 0.2
+            self.rotation_progress = 0.0
         else:
             self.size = max(0, self.size - CIRCLE_SCALE)  # Shrink after note ends
             self.opacity = max(0, self.opacity - 10)  # Fade out
-            if self.size <= 0 or self.opacity <= 0:
+            if self.rotation_start_time is not None:
+                time_since_rotation = elapsed_time - self.rotation_start_time
+                rotation_duration = 1.0  # seconds
+                self.rotation_progress = min(time_since_rotation / rotation_duration, 1.0)
+            else:
+                self.rotation_progress = 0.0
+            if self.size <= 0 or self.opacity <= 0 or self.rotation_progress >= 1.0:
                 self.finished = True
 
     def draw(self, surface):
@@ -112,7 +122,9 @@ class Note:
             # woodwind
             pygame.draw.line(s, color, (0, 0), (s_size, s_size), int(self.size))
         elif self.channel <= 7:
-            draw_inverse_cube(surface, self.x, self.y, self.size * 4, color)
+            # hide distracting cubes for now
+            # draw_rotating_cube(surface, self.x, self.y, self.size * 4, color, self)
+            pygame.draw.circle(s, color, (s_size // 2, s_size // 2), int(self.size))
         elif self.channel == 8:
             pygame.draw.line(s, color, (s_size, s_size), (0, 0), int(self.size))
         elif self.channel <= 10:
@@ -123,8 +135,8 @@ class Note:
 
         surface.blit(s, (int(self.x - self.size), int(self.y - self.size)))
 
-def draw_inverse_cube(surface, x, y, size, color):
-    """Draws an inverse cube at the given position."""
+def draw_rotating_cube(surface, x, y, size, color, note):
+    """Draws a rotating cube at the given position."""
     cube_vertices = [
         [-1, -1, -1],
         [ 1, -1, -1],
@@ -144,6 +156,7 @@ def draw_inverse_cube(surface, x, y, size, color):
 
     scale = size / 2
     angle = pygame.time.get_ticks() * 0.001  # Rotate over time
+
     rotation_matrix = [
         [math.cos(angle), 0, math.sin(angle)],
         [0, 1, 0],
@@ -151,14 +164,20 @@ def draw_inverse_cube(surface, x, y, size, color):
     ]
 
     def project(v):
-        x3d = v[0]
-        y3d = v[1]
-        z3d = v[2]
+        # Apply rotation scaling
+        rotation_scale = 1.0 - note.rotation_progress
+        v_scaled = [coordinate * rotation_scale for coordinate in v]
 
+        x3d = v_scaled[0]
+        y3d = v_scaled[1]
+        z3d = v_scaled[2]
+
+        # Apply rotation
         x_rot = x3d * rotation_matrix[0][0] + z3d * rotation_matrix[0][2]
         y_rot = y3d
         z_rot = x3d * rotation_matrix[2][0] + z3d * rotation_matrix[2][2]
 
+        # Apply perspective projection
         factor = 5 / (z_rot + 5)
         x_proj = x_rot * factor * scale + x
         y_proj = y_rot * factor * scale + y
@@ -171,7 +190,7 @@ def draw_inverse_cube(surface, x, y, size, color):
     for edge in edges:
         start = projected_vertices[edge[0]]
         end = projected_vertices[edge[1]]
-        pygame.draw.line(surface, color, start, end, 5) # TODO: fade out cube
+        pygame.draw.line(surface, color, start, end, 5)
 
 # Main function
 def main():
