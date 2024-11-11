@@ -85,6 +85,35 @@ class Note:
         # Copy the shape onto the main surface
         surface.blit(shape_surface, (int(self.x - self.size), int(self.y - self.size)))
 
+def generate_note_events(events: list, tracks: list):
+    print(f"Extracting notes into {num_tracks} tracks...")
+    current_time = 0
+    note_events = []
+    mid_length = len(events)
+
+    for mid_i, mid_msg in enumerate(events):
+        current_time += mid_msg.time
+        if mid_msg.type not in NOTE_TYPES:
+            continue
+
+        print(f"Processing message {mid_i}/{mid_length}", end='     \r')
+
+        # find matching event in tracks
+        found = False
+        for track_i in range(num_tracks):
+            track = tracks[track_i]
+            if mid_msg in track:
+                note_events.append({'time': current_time, 'track': track_i, 'message': mid_msg})
+                track.remove(mid_msg)
+                found = True
+                break
+
+        if not found:
+            # note events do not always belong to a track, but we can't just ignore them!
+            # i think this only applies to note_off events
+            note_events.append({'time': current_time, 'track': None, 'message': mid_msg})
+    print()
+    return note_events
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--midi", type=str, default=DEFAULT_FILE, help="MIDI filename to load (without extension)")
@@ -99,38 +128,12 @@ conversion_file_path = chordino.preprocess(midi_file)
 
 # Load MIDI file and extract messages as note events
 mid = mido.MidiFile(midi_file)
-note_events = []
-current_time = 0
 num_tracks = len(mid.tracks)
 
 for i, track in enumerate(mid.tracks):
     print(f"Track {i}: {track.name} ({len(track)} messages)")
 
-print(f"Extracting notes into {num_tracks} tracks...")
-current_time = 0
-mid_length = len(list(mid))
-for mid_i, mid_msg in enumerate(mid):
-    current_time += mid_msg.time
-    if mid_msg.type not in NOTE_TYPES:
-        continue
-
-    print(f"Processing message {mid_i}/{mid_length}", end='     \r')
-
-    found = False
-    for track_i in range(num_tracks):
-        for track_msg_i, track_msg in enumerate(mid.tracks[track_i]):
-            if mid_msg == track_msg:
-                note_events.append({'time': current_time, 'track': track_i, 'message': mid_msg})
-                mid.tracks[track_i].pop(track_msg_i)
-                found = True
-                break
-        if found:
-            break
-    if not found:
-        # note events do not always belong to a track, but we can't just ignore them!
-        # i think this only applies to note_off events
-        note_events.append({'time': current_time, 'track': None, 'message': mid_msg})
-print()
+note_events = generate_note_events(list(mid), mid.tracks)
 
 # Create the display surface
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
