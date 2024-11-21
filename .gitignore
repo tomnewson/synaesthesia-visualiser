@@ -16,3 +16,7 @@ __pycache__/
 # Audio files
 midi/
 wav/
+
+# Godot 4+ specific ignores
+.godot
+android/

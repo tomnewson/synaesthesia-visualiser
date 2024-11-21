@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://dcaikfuw3vf3"]
+
+[ext_resource type="Script" path="res://addons/gdscript-midi-parser-64ae88753ec9f9a212446c78567107f4a9a09f27/midi_file_player_example.gd" id="1_owvp8"]
+
+[node name="MidiDemo" type="Node2D"]
+script = ExtResource("1_owvp8")
+
+[node name="Player" type="Node" parent="."]
