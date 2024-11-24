@@ -1,9 +1,11 @@
-[gd_scene load_steps=8 format=3 uid="uid://bts85jkpxcyyl"]
+[gd_scene load_steps=10 format=3 uid="uid://bts85jkpxcyyl"]
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
 [ext_resource type="PackedScene" uid="uid://taibgqoypxpk" path="res://scenes/note.tscn" id="2_5g8ej"]
+[ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
 [ext_resource type="MidiResource" uid="uid://c3c5evd17l0s8" path="res://midi/5th-Symphony-Part-1.mid" id="3_6inaq"]
-[ext_resource type="AudioStream" uid="uid://crltxiwrdswb5" path="res://data/5th-Symphony-Part-1.wav" id="4_6xdln"]
+[ext_resource type="AudioStream" uid="uid://b3b8lto4mgmd4" path="res://data/messiaen_eternal.wav" id="5_v8m68"]
+[ext_resource type="Script" path="res://scenes/midi_receiver.gd" id="6_p3jmh"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_8urim"]
 sky_top_color = Color(0.828516, 0.524664, 7.70092e-07, 1)
@@ -22,11 +24,17 @@ sky = SubResource("Sky_pbdgm")
 script = ExtResource("1_3kk6h")
 note_scene = ExtResource("2_5g8ej")
 
+[node name="ArlezMidiPlayer" type="Node" parent="."]
+script = ExtResource("3_1tp21")
+file = "res://midi/messiaen_eternal.mid"
+playing = true
+soundfont = "res://data/merlin_orchestra(v1.40).sf2"
+
 [node name="MidiPlayer" type="MidiPlayer" parent="."]
 midi = ExtResource("3_6inaq")
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("4_6xdln")
+stream = ExtResource("5_v8m68")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 10)
@@ -41,4 +49,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.15724, -2.37129, -3.24494)
 visible = false
 skeleton = NodePath("../Camera3D")
 
-[node name="Node" type="Node" parent="."]
+[node name="MidiReceiver" type="Node" parent="."]
+script = ExtResource("6_p3jmh")
+
+[connection signal="midi_event" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_midi_event"]
+[connection signal="start" from="ArlezMidiPlayer" to="." method="_on_arlez_midi_player_start"]
+[connection signal="start" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_start"]
+[connection signal="note_off" from="MidiReceiver" to="." method="_on_midi_receiver_note_off"]
+[connection signal="note_on" from="MidiReceiver" to="." method="_on_midi_receiver_note_on"]
