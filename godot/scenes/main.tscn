@@ -1,8 +1,8 @@
 [gd_scene load_steps=8 format=3 uid="uid://bts85jkpxcyyl"]
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
-[ext_resource type="PackedScene" uid="uid://taibgqoypxpk" path="res://scenes/note.tscn" id="2_5g8ej"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
+[ext_resource type="Script" path="res://scenes/synaesthesia.gd" id="4_7p8lc"]
 [ext_resource type="Script" path="res://scripts/midi_receiver.gd" id="6_p3jmh"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_8urim"]
@@ -20,24 +20,27 @@ sky = SubResource("Sky_pbdgm")
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_3kk6h")
-note_scene = ExtResource("2_5g8ej")
 
 [node name="ArlezMidiPlayer" type="Node" parent="."]
 script = ExtResource("3_1tp21")
-file = "res://midi/messiaen_eternal.mid"
+file = "res://midi/deep_depression_blues_hh.mid"
 soundfont = "res://data/merlin_orchestra(v1.40).sf2"
 
 [node name="MidiReceiver" type="Node" parent="."]
 script = ExtResource("6_p3jmh")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 10)
 current = true
-fov = 90.0
+
+[node name="Synaesthesia" type="Node3D" parent="Camera3D"]
+script = ExtResource("4_7p8lc")
+num_tracks = 9
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_xo5ig")
 
 [connection signal="midi_event" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_midi_event"]
 [connection signal="note_off" from="MidiReceiver" to="." method="_on_midi_receiver_note_off"]
+[connection signal="note_off" from="MidiReceiver" to="Camera3D/Synaesthesia" method="_on_midi_receiver_note_off"]
 [connection signal="note_on" from="MidiReceiver" to="." method="_on_midi_receiver_note_on"]
+[connection signal="note_on" from="MidiReceiver" to="Camera3D/Synaesthesia" method="_on_midi_receiver_note_on"]

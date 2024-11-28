@@ -1,7 +1,7 @@
 extends Node
 
 signal note_on ( note_id, note, velocity, track )
-signal note_off ( note_id )
+signal note_off ( note_id, track )
 
 func _on_midi_event(channel: MidiPlayerAddon.GodotMIDIPlayerChannelStatus, event: SMF.MIDIEvent):
 	if event.type == SMF.MIDIEventType.note_off or event.type == SMF.MIDIEventType.note_on:
@@ -10,8 +10,8 @@ func _on_midi_event(channel: MidiPlayerAddon.GodotMIDIPlayerChannelStatus, event
 			SMF.MIDIEventType.note_on:
 				print(channel.number, " - ", channel.track_name)
 				if event.velocity == 0:
-					self.emit_signal("note_off", note_id)
-				
-				self.emit_signal("note_on", note_id, event.note, event.velocity, channel.number)
+					emit_signal("note_off", note_id)
+				else:
+					emit_signal("note_on", note_id, event.note, event.velocity, channel.number)
 			SMF.MIDIEventType.note_off:
-				self.emit_signal("note_off", note_id)
+				emit_signal("note_off", note_id, channel.number)
