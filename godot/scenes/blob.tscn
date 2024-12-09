@@ -1,19 +1,19 @@
 [gd_scene load_steps=4 format=3 uid="uid://bsh40a7qwua4g"]
 
 [ext_resource type="Script" path="res://scenes/blob.gd" id="1_2k0tr"]
-[ext_resource type="Script" path="res://scenes/csg_polygon_3d.gd" id="2_85j5o"]
+[ext_resource type="Script" path="res://scripts/csg_polygon_3d.gd" id="2_85j5o"]
 
 [sub_resource type="Curve3D" id="Curve3D_wkq0p"]
 
 [node name="Blob" type="Node3D"]
 script = ExtResource("1_2k0tr")
-sphere_radius = 0.4
+sphere_radius = 1.0
 
 [node name="Path3D" type="Path3D" parent="."]
 curve = SubResource("Curve3D_wkq0p")
 
 [node name="CSGPolygon3D" type="CSGPolygon3D" parent="Path3D"]
-polygon = PackedVector2Array(0, 0.5, 0.152117, 0.851412, 0.5, 1, 0.839261, 0.883539, 1, 0.5, 0.910522, 0.129159, 0.5, 0, 0.0716083, 0.141958)
+polygon = PackedVector2Array(0, 1, 0.707107, 0.707107, 1, 6.12323e-17, 0.707107, -0.707107, 1.22465e-16, -1, -0.707107, -0.707107, -1, -1.83697e-16, -0.707107, 0.707107)
 mode = 2
 path_node = NodePath("..")
 path_interval_type = 0

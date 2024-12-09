@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
-[ext_resource type="Script" path="res://scenes/synaesthesia.gd" id="4_7p8lc"]
+[ext_resource type="Script" path="res://scripts/synaesthesia.gd" id="4_7p8lc"]
 [ext_resource type="Script" path="res://scripts/midi_receiver.gd" id="6_p3jmh"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_8urim"]
@@ -34,7 +34,6 @@ current = true
 
 [node name="Synaesthesia" type="Node3D" parent="Camera3D"]
 script = ExtResource("4_7p8lc")
-num_tracks = 9
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_xo5ig")

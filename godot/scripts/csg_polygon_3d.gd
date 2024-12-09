@@ -21,10 +21,5 @@ func _ready() -> void:
 	# y = r * sin (theta)
 	var poly = PackedVector2Array()
 	for angle in angles:
-		poly.append(Vector2(radius * cos(angle), radius * sin(angle)))
+		poly.append(Vector2(radius * sin(angle), radius * cos(angle)))
 	self.polygon = poly
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
