@@ -12,8 +12,10 @@ const MAX_VELOCITY = 127
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	for i in range (num_tracks + 1):
+		var x = remap(i, 0, num_tracks, -7, 7)
 		var track_instance = path_scene.instantiate()
 		track_paths.append(track_instance)
+		track_instance.translate(Vector3(x, 0, 0))
 		add_child(track_instance)
 
 # Function to apply sigmoid remap with variable input and output ranges
@@ -43,15 +45,14 @@ func _on_midi_receiver_note_on(note_id, note, velocity, track) -> void:
 	# low pitch - big, low down, wide, transparent, dark, rough
 	# loud - near
 	# quiet - far
-	var x = remap(track, 0, num_tracks, -10, 10) - 2
 	var y = sigmoid_remap(note, MIN_NOTE, MAX_NOTE, -3, 5)
 	var z = sigmoid_remap(velocity, MIN_VELOCITY, MAX_VELOCITY, -10, -7)
-	var hue = sigmoid_remap(note, MIN_NOTE, MAX_NOTE, 0, 1, 0.5)
+	var hue = sigmoid_remap(note, MIN_NOTE, MAX_NOTE, 0, 1, 1)
 	var brightness = sigmoid_remap(note, MIN_NOTE, MAX_NOTE, 0.5, 1, 0.5)
 	var opacity = sigmoid_remap(note, MIN_NOTE, MAX_NOTE, 0.5, 1)
 	var roughness = sigmoid_remap(note, MIN_NOTE, MAX_NOTE, 1, 0)
 	
-	track_paths[track].add_note(note_id, Vector3(x,y,z), hue, brightness, opacity, roughness)
+	track_paths[track].add_note(note_id, Vector3(0,y,z), hue, brightness, opacity, roughness)
 
 func _on_midi_receiver_note_off(note_id, track) -> void:
 	track_paths[track].remove_note(note_id)

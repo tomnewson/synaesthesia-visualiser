@@ -1,11 +1,14 @@
 extends Node3D
 
 var notes = [] # active notes using the following enum
-enum { KEY, POSITION, HUE, BRIGHTNESS, OPACITY, ROUGHNESS, SPHERE }
+enum { KEY, POSITION, HUE, BRIGHTNESS, OPACITY, ROUGHNESS }
 
-@export var sphere_radius = 0.2
+@export var single_note_size = 0.2
+@export var rotation_speed = 90.0
 
 var material = StandardMaterial3D.new()
+var sphere_mesh = SphereMesh.new()
+var box_mesh = BoxMesh.new()
 
 @onready var path = $Path3D
 @onready var path_polygon = $Path3D/CSGPolygon3D
@@ -15,6 +18,47 @@ func _ready() -> void:
 	path.curve = Curve3D.new()
 	path_polygon.material = material
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	sphere_mesh.material = material
+	sphere_mesh.radius = single_note_size
+	sphere_mesh.height = single_note_size * 2
+	box_mesh.material = material
+	box_mesh.size = Vector3(single_note_size, single_note_size, single_note_size)
+	
+func _process(delta:float):
+	for child in self.get_children():
+		#if child is Path3D and child.curve.point_count > 0:
+			#var center = calculate_center(child.curve)
+			#var rotation_angle = deg_to_rad(rotation_speed * delta)
+			##var rotation_transform = Transform3D(Basis(Vector3.UP, rotation_angle), Vector3.ZERO)
+##
+			### Apply rotation transformation relative to the center
+			##child.global_transform.origin -= center
+			##child.global_transform = rotation_transform * child.global_transform
+			##child.global_transform.origin += center
+			#child.rotate_object
+			#child.rotate_object_local(Vector3.UP, rotation_angle)
+		if child is MeshInstance3D:
+			child.rotate_object_local(Vector3.UP, deg_to_rad(rotation_speed * delta))
+		
+	
+func calculate_center(curve: Curve3D):
+	var min = curve.get_point_position(0)
+	var max = curve.get_point_position(0)
+
+	# Iterate through all points to calculate bounds
+	for i in range(1, curve.point_count):
+		var point = curve.get_point_position(0)
+		min = min.min(point)
+		max = max.max(point)
+
+	# Return the center point
+	return min + (max - min) * 0.5
+	
+func _show_markers():
+	var marker = MeshInstance3D.new()
+	marker.mesh = sphere_mesh
+	marker.translate(Vector3(0,0,-7))
+	add_child(marker)
 	
 func update_material():
 	# Adjust material properties
@@ -56,18 +100,14 @@ func _insert_into_sorted_list(sorted_list, arr):
 
 	sorted_list.insert(left, arr)
 	
-func _render_sphere(pos):
-	var sphere = MeshInstance3D.new()
-	var sphere_mesh = SphereMesh.new()
+func _render_single_note(pos):
+	var mesh_instance = MeshInstance3D.new()
 	
 	# render sphere per note
-	sphere_mesh.material = material
-	sphere_mesh.radius = sphere_radius
-	sphere_mesh.height = sphere_radius * 2
-	sphere.mesh = sphere_mesh
-	sphere.translate(pos)
+	mesh_instance.mesh = box_mesh
+	mesh_instance.translate(pos)
 	
-	return sphere
+	self.add_child(mesh_instance)
 	
 func _render_track():
 	path.curve.clear_points()
@@ -80,7 +120,7 @@ func _render_track():
 			return
 		1:
 			self.update_material()
-			self.add_child(notes[0][SPHERE])
+			self._render_single_note(notes[0][POSITION])
 		_:
 			self.update_material()
 			for n in notes:
@@ -97,7 +137,6 @@ func add_note(key: String, pos: Vector3, hue: float, brightness: float, opacity:
 			brightness,
 			opacity,
 			roughness,
-			self._render_sphere(pos),
 		],
 	)
 	self._render_track()

@@ -7,7 +7,8 @@
 
 [node name="Blob" type="Node3D"]
 script = ExtResource("1_2k0tr")
-sphere_radius = 1.0
+single_note_size = 1.0
+rotation_speed = 60.0
 
 [node name="Path3D" type="Path3D" parent="."]
 curve = SubResource("Curve3D_wkq0p")
