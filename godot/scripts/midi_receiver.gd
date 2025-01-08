@@ -10,7 +10,7 @@ func _on_midi_event(channel: MidiPlayerAddon.GodotMIDIPlayerChannelStatus, event
 	match event.type:
 		SMF.MIDIEventType.note_on:
 				var note_id = _note_id(channel, event)
-				print(channel.track_name, " - note: ", event.note)
+				print("Track ", channel.number, " - note: ", event.note, " velocity: ", event.velocity)
 				if event.velocity == 0:
 					emit_signal("note_off", note_id)
 				else:

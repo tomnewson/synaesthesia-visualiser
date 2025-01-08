@@ -1,9 +1,12 @@
-[gd_scene load_steps=8 format=3 uid="uid://bts85jkpxcyyl"]
+[gd_scene load_steps=20 format=3 uid="uid://bts85jkpxcyyl"]
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
 [ext_resource type="Script" path="res://scripts/synaesthesia.gd" id="4_7p8lc"]
+[ext_resource type="Shader" path="res://scripts/overlay3d.gdshader" id="4_37w5g"]
+[ext_resource type="Shader" path="res://scripts/overlay.gdshader" id="5_roamn"]
 [ext_resource type="Script" path="res://scripts/midi_receiver.gd" id="6_p3jmh"]
+[ext_resource type="Shader" path="res://scripts/test_sphere.gdshader" id="6_txkay"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_8urim"]
 sky_top_color = Color(0.828516, 0.524664, 7.70092e-07, 1)
@@ -15,16 +18,48 @@ ground_horizon_color = Color(0.615434, 0.638822, 0.834779, 1)
 sky_material = SubResource("ProceduralSkyMaterial_8urim")
 
 [sub_resource type="Environment" id="Environment_xo5ig"]
-background_mode = 2
+background_mode = 1
+background_color = Color(0.489533, 0.392, 0.7, 1)
 sky = SubResource("Sky_pbdgm")
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_r4mv0"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_4546l"]
+noise = SubResource("FastNoiseLite_r4mv0")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4sawa"]
+shader = ExtResource("5_roamn")
+shader_parameter/distortionTexture = SubResource("NoiseTexture2D_4546l")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_d7o3u"]
+render_priority = 0
+shader = ExtResource("6_txkay")
+
+[sub_resource type="SphereMesh" id="SphereMesh_biq5k"]
+material = SubResource("ShaderMaterial_d7o3u")
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_hmpuh"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_n64ke"]
+noise = SubResource("FastNoiseLite_hmpuh")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_poibb"]
+render_priority = 0
+shader = ExtResource("4_37w5g")
+shader_parameter/distortion_texture = SubResource("NoiseTexture2D_n64ke")
+
+[sub_resource type="QuadMesh" id="QuadMesh_74lex"]
+material = SubResource("ShaderMaterial_poibb")
+flip_faces = true
+size = Vector2(2, 2)
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_3kk6h")
 
 [node name="ArlezMidiPlayer" type="Node" parent="."]
 script = ExtResource("3_1tp21")
-file = "res://midi/deep_depression_blues_hh.mid"
-soundfont = "res://data/merlin_orchestra(v1.40).sf2"
+file = "res://midi/in_a_mellow_tone_djl.mid"
+soundfont = "res://data/Timbres of Heaven (XGM) 4.00(G).sf2"
 
 [node name="MidiReceiver" type="Node" parent="."]
 script = ExtResource("6_p3jmh")
@@ -37,6 +72,21 @@ script = ExtResource("4_7p8lc")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_xo5ig")
+
+[node name="Overlay" type="ColorRect" parent="."]
+visible = false
+material = SubResource("ShaderMaterial_4sawa")
+offset_right = 1920.0
+offset_bottom = 1080.0
+
+[node name="TestSphere" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.21407)
+mesh = SubResource("SphereMesh_biq5k")
+
+[node name="Overlay3D" type="MeshInstance3D" parent="."]
+extra_cull_margin = 16384.0
+mesh = SubResource("QuadMesh_74lex")
+skeleton = NodePath("../Overlay")
 
 [connection signal="midi_event" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_midi_event"]
 [connection signal="note_off" from="MidiReceiver" to="." method="_on_midi_receiver_note_off"]
