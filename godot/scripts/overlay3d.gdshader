@@ -6,13 +6,15 @@ uniform sampler2D screen_texture : source_color, hint_screen_texture;
 uniform sampler2D depth_texture : hint_depth_texture;
 uniform sampler2D normal_rough_texture : hint_normal_roughness_texture;
 uniform sampler2D distortion_texture;
+uniform float distortion_intensity: hint_range(0.0, 1.0, 0.01);
 
 void vertex() {
 	POSITION = vec4(VERTEX.xy, 1.0, 1.0);
 }
 
 void fragment() {
-	vec2 distortedUV = SCREEN_UV + texture(distortion_texture, UV).r * 0.05;
+	float weighted_ds_int = distortion_intensity * 0.4;
+	vec2 distortedUV = SCREEN_UV + texture(distortion_texture, UV).r * weighted_ds_int;
 	vec4 screen = texture(screen_texture, distortedUV);
 	
 	float depth_raw = texture(depth_texture, SCREEN_UV).x;

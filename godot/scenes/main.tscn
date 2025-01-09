@@ -1,10 +1,8 @@
-[gd_scene load_steps=20 format=3 uid="uid://bts85jkpxcyyl"]
+[gd_scene load_steps=15 format=3 uid="uid://bts85jkpxcyyl"]
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
-[ext_resource type="Script" path="res://scripts/synaesthesia.gd" id="4_7p8lc"]
 [ext_resource type="Shader" path="res://scripts/overlay3d.gdshader" id="4_37w5g"]
-[ext_resource type="Shader" path="res://scripts/overlay.gdshader" id="5_roamn"]
 [ext_resource type="Script" path="res://scripts/midi_receiver.gd" id="6_p3jmh"]
 [ext_resource type="Shader" path="res://scripts/test_sphere.gdshader" id="6_txkay"]
 
@@ -22,15 +20,6 @@ background_mode = 1
 background_color = Color(0.489533, 0.392, 0.7, 1)
 sky = SubResource("Sky_pbdgm")
 
-[sub_resource type="FastNoiseLite" id="FastNoiseLite_r4mv0"]
-
-[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_4546l"]
-noise = SubResource("FastNoiseLite_r4mv0")
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_4sawa"]
-shader = ExtResource("5_roamn")
-shader_parameter/distortionTexture = SubResource("NoiseTexture2D_4546l")
-
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_d7o3u"]
 render_priority = 0
 shader = ExtResource("6_txkay")
@@ -41,11 +30,16 @@ material = SubResource("ShaderMaterial_d7o3u")
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_hmpuh"]
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_n64ke"]
+width = 1920
+height = 1080
+in_3d_space = true
+seamless = true
 noise = SubResource("FastNoiseLite_hmpuh")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_poibb"]
 render_priority = 0
 shader = ExtResource("4_37w5g")
+shader_parameter/distortion_intensity = 0.1
 shader_parameter/distortion_texture = SubResource("NoiseTexture2D_n64ke")
 
 [sub_resource type="QuadMesh" id="QuadMesh_74lex"]
@@ -68,25 +62,18 @@ script = ExtResource("6_p3jmh")
 current = true
 
 [node name="Synaesthesia" type="Node3D" parent="Camera3D"]
-script = ExtResource("4_7p8lc")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_xo5ig")
 
-[node name="Overlay" type="ColorRect" parent="."]
-visible = false
-material = SubResource("ShaderMaterial_4sawa")
-offset_right = 1920.0
-offset_bottom = 1080.0
-
 [node name="TestSphere" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.21407)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.429)
 mesh = SubResource("SphereMesh_biq5k")
 
 [node name="Overlay3D" type="MeshInstance3D" parent="."]
 extra_cull_margin = 16384.0
 mesh = SubResource("QuadMesh_74lex")
-skeleton = NodePath("../Overlay")
+skeleton = NodePath("")
 
 [connection signal="midi_event" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_midi_event"]
 [connection signal="note_off" from="MidiReceiver" to="." method="_on_midi_receiver_note_off"]
