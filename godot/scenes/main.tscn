@@ -1,8 +1,9 @@
-[gd_scene load_steps=15 format=3 uid="uid://bts85jkpxcyyl"]
+[gd_scene load_steps=18 format=3 uid="uid://bts85jkpxcyyl"]
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
 [ext_resource type="Shader" path="res://scripts/overlay3d.gdshader" id="4_37w5g"]
+[ext_resource type="Shader" path="res://scripts/waves.gdshader" id="6_hwyg6"]
 [ext_resource type="Script" path="res://scripts/midi_receiver.gd" id="6_p3jmh"]
 [ext_resource type="Shader" path="res://scripts/test_sphere.gdshader" id="6_txkay"]
 
@@ -39,7 +40,7 @@ noise = SubResource("FastNoiseLite_hmpuh")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_poibb"]
 render_priority = 0
 shader = ExtResource("4_37w5g")
-shader_parameter/distortion_intensity = 0.1
+shader_parameter/distortion_intensity = 0.0
 shader_parameter/distortion_texture = SubResource("NoiseTexture2D_n64ke")
 
 [sub_resource type="QuadMesh" id="QuadMesh_74lex"]
@@ -47,8 +48,32 @@ material = SubResource("ShaderMaterial_poibb")
 flip_faces = true
 size = Vector2(2, 2)
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sqfg8"]
+render_priority = 0
+shader = ExtResource("6_hwyg6")
+shader_parameter/amplitude = 0.3
+shader_parameter/frequency = 10.0
+shader_parameter/speed = 3.0
+shader_parameter/wave_direction = Vector2(0, 1)
+shader_parameter/add_color = Color(0.2904, 0.771907, 0.88, 0.392157)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_3se3j"]
+material = SubResource("ShaderMaterial_sqfg8")
+size = Vector2(3.54, 2)
+subdivide_width = 105
+subdivide_depth = 105
+
 [node name="Main" type="Node3D"]
 script = ExtResource("1_3kk6h")
+
+[node name="SpotLight3D" type="SpotLight3D" parent="."]
+transform = Transform3D(0.942886, 0.333113, -0.00126744, -0.333116, 0.942879, -0.0035875, 0, 0.00380481, 0.999993, -1.14598, 0.710281, 1.28442)
+
+[node name="SpotLight3D2" type="SpotLight3D" parent="."]
+transform = Transform3D(0.92958, 0.32905, 0.166155, -0.333116, 0.942879, -0.0035875, -0.157844, -0.0520139, 0.986093, 1.02373, 0.710281, 1.28442)
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.550254, 0.614948)
 
 [node name="ArlezMidiPlayer" type="Node" parent="."]
 script = ExtResource("3_1tp21")
@@ -68,12 +93,18 @@ environment = SubResource("Environment_xo5ig")
 
 [node name="TestSphere" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.429)
+visible = false
 mesh = SubResource("SphereMesh_biq5k")
 
-[node name="Overlay3D" type="MeshInstance3D" parent="."]
+[node name="GlobalOverlay" type="MeshInstance3D" parent="."]
+visible = false
 extra_cull_margin = 16384.0
 mesh = SubResource("QuadMesh_74lex")
 skeleton = NodePath("")
+
+[node name="Waves" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.942057, -0.335452, 0, 0.335452, 0.942057, 0, -0.24026, -1.1051)
+mesh = SubResource("PlaneMesh_3se3j")
 
 [connection signal="midi_event" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_midi_event"]
 [connection signal="note_off" from="MidiReceiver" to="." method="_on_midi_receiver_note_off"]

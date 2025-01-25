@@ -13,7 +13,7 @@ void vertex() {
 }
 
 void fragment() {
-	float weighted_ds_int = distortion_intensity * 0.4;
+	float weighted_ds_int = distortion_intensity * 0.05;
 	vec2 distortedUV = SCREEN_UV + texture(distortion_texture, UV).r * weighted_ds_int;
 	vec4 screen = texture(screen_texture, distortedUV);
 	
