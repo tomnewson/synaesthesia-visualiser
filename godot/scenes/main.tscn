@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://bts85jkpxcyyl"]
+[gd_scene load_steps=20 format=3 uid="uid://bts85jkpxcyyl"]
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scripts/screen_reader.gd" id="6_mtn6x"]
 [ext_resource type="Script" path="res://scripts/midi_receiver.gd" id="6_p3jmh"]
 [ext_resource type="Shader" path="res://scripts/test_sphere.gdshader" id="6_txkay"]
+[ext_resource type="Shader" path="res://scripts/strings.gdshader" id="8_yp5tl"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_8urim"]
 sky_top_color = Color(0.828516, 0.524664, 7.70092e-07, 1)
@@ -49,6 +50,22 @@ material = SubResource("ShaderMaterial_sqfg8")
 size = Vector2(6, 2)
 subdivide_width = 105
 subdivide_depth = 105
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_a7wmh"]
+shader = ExtResource("8_yp5tl")
+shader_parameter/overallSpeed = 0.2
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_grwkl"]
+lightmap_size_hint = Vector2i(3, 3)
+material = SubResource("ShaderMaterial_a7wmh")
+size = Vector2(0.285, 0.265)
+subdivide_width = 85
+subdivide_depth = 120
+orientation = 2
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fsg28"]
+shader = ExtResource("8_yp5tl")
+shader_parameter/overallSpeed = 0.2
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_3kk6h")
@@ -102,6 +119,21 @@ render_target_update_mode = 4
 
 [node name="Camera3D" type="Camera3D" parent="WavesViewport"]
 cull_mask = 2
+
+[node name="Strings" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.28)
+visible = false
+mesh = SubResource("PlaneMesh_grwkl")
+
+[node name="Overlay" type="CanvasLayer" parent="."]
+
+[node name="Strings" type="ColorRect" parent="Overlay"]
+material = SubResource("ShaderMaterial_fsg28")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [connection signal="midi_event" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_midi_event"]
 [connection signal="note_off" from="MidiReceiver" to="." method="_on_midi_receiver_note_off"]

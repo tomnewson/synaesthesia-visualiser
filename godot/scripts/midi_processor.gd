@@ -21,6 +21,8 @@ var target_pipe_intensity: float
 var target_pipe_color: Color
 var target_pipe_alpha: float
 
+var target_strings_speed: float
+
 enum Note {ID, TRACK, PITCH, VELOCITY, INSTRUMENT}
 
 func lerp_between_colors(current_color: Color, target_color, transition_speed) -> Color:
@@ -50,6 +52,8 @@ func _ready() -> void:
 	target_pipe_intensity = BASE_WAVES_INTENSITY
 	target_pipe_alpha = 0;
 	
+	target_strings_speed = 0.0
+	
 func _process(delta):
 	#if no_notes_played and target_bg_color != Color.BLACK:
 		#environment.background_color = target_bg_color
@@ -75,6 +79,11 @@ func _process(delta):
 	var current_pipe_alpha = waves_mat.get_shader_parameter("alpha")
 	var new_pipe_alpha = lerp(current_pipe_alpha, target_pipe_alpha, WAVES_TRANSITION_SPEED * delta)
 	waves_mat.set_shader_parameter("alpha", new_pipe_alpha)
+	
+	var strings_mat: ShaderMaterial = $Overlay/Strings.material
+	var current_strings_speed = strings_mat.get_shader_parameter("overallSpeed")
+	var new_strings_speed = lerp(current_strings_speed, target_strings_speed, WAVES_TRANSITION_SPEED * delta)
+	strings_mat.set_shader_parameter("overallSpeed", new_strings_speed)
 	
 
 func sigmoid(value: float, steepness: float, midpoint: float) -> float:
@@ -135,6 +144,9 @@ func update_active_notes():
 		instrument_stats[Globals.InstrumentCategory.PIPE][COUNT],
 	)
 	
+	# strings
+	var strings = $Overlay/Strings
+	target_strings_speed = 0.05 + (clamp(instrument_stats[Globals.InstrumentCategory.STRINGS][VELOCITY], 0, 100.0) / 100.0) / 4.0
 
 func set_pipe_targets(sum_pitch, velocity, count):
 	target_pipe_intensity = BASE_WAVES_INTENSITY + (clamp(velocity, 0, 100) / 100.0) / 3.0
