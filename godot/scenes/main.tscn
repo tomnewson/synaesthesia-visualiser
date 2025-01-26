@@ -1,9 +1,10 @@
-[gd_scene load_steps=18 format=3 uid="uid://bts85jkpxcyyl"]
+[gd_scene load_steps=16 format=3 uid="uid://bts85jkpxcyyl"]
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
-[ext_resource type="Shader" path="res://scripts/overlay3d.gdshader" id="4_37w5g"]
+[ext_resource type="Material" uid="uid://ua4rqa7bo2pd" path="res://data/screen_reader_material.tres" id="5_3frte"]
 [ext_resource type="Shader" path="res://scripts/waves.gdshader" id="6_hwyg6"]
+[ext_resource type="Script" path="res://scripts/screen_reader.gd" id="6_mtn6x"]
 [ext_resource type="Script" path="res://scripts/midi_receiver.gd" id="6_p3jmh"]
 [ext_resource type="Shader" path="res://scripts/test_sphere.gdshader" id="6_txkay"]
 
@@ -28,23 +29,8 @@ shader = ExtResource("6_txkay")
 [sub_resource type="SphereMesh" id="SphereMesh_biq5k"]
 material = SubResource("ShaderMaterial_d7o3u")
 
-[sub_resource type="FastNoiseLite" id="FastNoiseLite_hmpuh"]
-
-[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_n64ke"]
-width = 1920
-height = 1080
-in_3d_space = true
-seamless = true
-noise = SubResource("FastNoiseLite_hmpuh")
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_poibb"]
-render_priority = 0
-shader = ExtResource("4_37w5g")
-shader_parameter/distortion_intensity = 0.0
-shader_parameter/distortion_texture = SubResource("NoiseTexture2D_n64ke")
-
 [sub_resource type="QuadMesh" id="QuadMesh_74lex"]
-material = SubResource("ShaderMaterial_poibb")
+material = ExtResource("5_3frte")
 flip_faces = true
 size = Vector2(2, 2)
 
@@ -55,11 +41,12 @@ shader_parameter/amplitude = 0.3
 shader_parameter/frequency = 10.0
 shader_parameter/speed = 3.0
 shader_parameter/wave_direction = Vector2(0, 1)
+shader_parameter/alpha = 0.8
 shader_parameter/add_color = Color(0.2904, 0.771907, 0.88, 0.392157)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_3se3j"]
 material = SubResource("ShaderMaterial_sqfg8")
-size = Vector2(3.54, 2)
+size = Vector2(6, 2)
 subdivide_width = 105
 subdivide_depth = 105
 
@@ -84,6 +71,7 @@ soundfont = "res://data/Timbres of Heaven (XGM) 4.00(G).sf2"
 script = ExtResource("6_p3jmh")
 
 [node name="Camera3D" type="Camera3D" parent="."]
+cull_mask = 1048573
 current = true
 
 [node name="Synaesthesia" type="Node3D" parent="Camera3D"]
@@ -96,15 +84,24 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.429)
 visible = false
 mesh = SubResource("SphereMesh_biq5k")
 
-[node name="GlobalOverlay" type="MeshInstance3D" parent="."]
-visible = false
+[node name="ScreenReader" type="MeshInstance3D" parent="."]
 extra_cull_margin = 16384.0
 mesh = SubResource("QuadMesh_74lex")
 skeleton = NodePath("")
+script = ExtResource("6_mtn6x")
 
 [node name="Waves" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.942057, -0.335452, 0, 0.335452, 0.942057, 0, -0.24026, -1.1051)
+layers = 2
 mesh = SubResource("PlaneMesh_3se3j")
+
+[node name="WavesViewport" type="SubViewport" parent="."]
+transparent_bg = true
+size = Vector2i(1920, 1080)
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="WavesViewport"]
+cull_mask = 2
 
 [connection signal="midi_event" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_midi_event"]
 [connection signal="note_off" from="MidiReceiver" to="." method="_on_midi_receiver_note_off"]

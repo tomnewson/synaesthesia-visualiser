@@ -2,7 +2,7 @@ extends Node3D
 
 @onready var midi_player = $ArlezMidiPlayer
 @onready var environment: Environment = $WorldEnvironment.environment
-@onready var overlay: MeshInstance3D = $GlobalOverlay
+@onready var overlay: MeshInstance3D = $ScreenReader
 @onready var waves: MeshInstance3D = $Waves
 
 const MAX_VELOCITY = 1000.0
@@ -19,6 +19,7 @@ var target_dist_intensity: float
 
 var target_pipe_intensity: float
 var target_pipe_color: Color
+var target_pipe_alpha: float
 
 enum Note {ID, TRACK, PITCH, VELOCITY, INSTRUMENT}
 
@@ -30,20 +31,29 @@ func lerp_between_colors(current_color: Color, target_color, transition_speed) -
 	
 	return Color.from_hsv(new_hue, new_sat, new_val)
 
+func reset_material(material: ShaderMaterial, base_intensity, base_color, base_transparency):
+	material.set_shader_parameter("amplitude", BASE_WAVES_INTENSITY)
+	material.set_shader_parameter("add_color", Color.TRANSPARENT)
+	material.set_shader_parameter("alpha", 0.0)
+
 func _ready() -> void:
 	midi_player.play()
-	environment.background_color = Color.BLACK
-	target_bg_color = Color.BLACK
-	target_dist_intensity = 0
 	no_notes_played = true
 	
+	environment.background_color = Color.BLACK
+	target_bg_color = Color.BLACK
+	
+	target_dist_intensity = 0
+	
+	reset_material(waves.mesh.surface_get_material(0), BASE_WAVES_INTENSITY, Color.TRANSPARENT, 0.0)
 	target_pipe_color = Color.TRANSPARENT
 	target_pipe_intensity = BASE_WAVES_INTENSITY
+	target_pipe_alpha = 0;
 	
 func _process(delta):
-	if no_notes_played and target_bg_color != Color.BLACK:
-		environment.background_color = target_bg_color
-		no_notes_played = false
+	#if no_notes_played and target_bg_color != Color.BLACK:
+		#environment.background_color = target_bg_color
+		#no_notes_played = false
 		
 	# TODO: FIX lerp to properly transition according to delta
 	
@@ -62,6 +72,9 @@ func _process(delta):
 	var current_pipe_color = waves_mat.get_shader_parameter("add_color")
 	var new_pipe_color = lerp_between_colors(current_pipe_color, target_pipe_color, WAVES_TRANSITION_SPEED * delta)
 	waves_mat.set_shader_parameter("add_color", new_pipe_color)
+	var current_pipe_alpha = waves_mat.get_shader_parameter("alpha")
+	var new_pipe_alpha = lerp(current_pipe_alpha, target_pipe_alpha, WAVES_TRANSITION_SPEED * delta)
+	waves_mat.set_shader_parameter("alpha", new_pipe_alpha)
 	
 
 func sigmoid(value: float, steepness: float, midpoint: float) -> float:
@@ -76,44 +89,62 @@ func color_from_notes(avg_pitch: float, sum_velocity: float, max_velocity: float
 	
 	return Color.from_hsv(hue, sat, brightness)
 	
+enum {
+	PITCH,
+	VELOCITY,
+	COUNT,
+}
 
 func update_active_notes():
 	if active_notes.is_empty():
 		target_dist_intensity = 0
 		#target_bg_color = Color.BLACK
+		set_pipe_targets(0,0,0)
 		return
-	
-	var sum_pitch = 0
-	var sum_velocity = 0
-	var pipe_pitch = 0
-	var pipe_velocity = 0
-	var pipe_count = 0
-	for n in active_notes:
-		sum_pitch += n[Note.PITCH]
-		sum_velocity += n[Note.VELOCITY]
 		
-		match n[Note.INSTRUMENT]:
-			Globals.InstrumentCategory.PIPE:
-				pipe_pitch += n[Note.PITCH]
-				pipe_velocity += n[Note.VELOCITY]
-				pipe_count += 1
-			_:
-				pass
+	var instrument_stats = {"total": [0,0]}
+	# clear instruments
+	for i in Globals.InstrumentCategory.values():
+		instrument_stats[i] = [0,0,0]
+		
+	for n in active_notes:
+		var pitch = n[Note.PITCH]
+		var velocity = n[Note.VELOCITY]
+		var instrument = n[Note.INSTRUMENT]
+		
+		instrument_stats["total"][PITCH] += pitch
+		instrument_stats["total"][VELOCITY] += velocity
+		
+		instrument_stats[instrument][PITCH] += pitch
+		instrument_stats[instrument][VELOCITY] += velocity
+		instrument_stats[instrument][COUNT] += 1
 	
-	var avg_pitch = sum_pitch / len(active_notes)
-	var clamped_sv = clamp(sum_velocity, 0, MAX_VELOCITY)
+	var avg_pitch = instrument_stats["total"][PITCH] / len(active_notes)
+	var clamped_sv = clamp(instrument_stats["total"][VELOCITY], 0, MAX_VELOCITY)
 	
-	target_bg_color = color_from_notes(avg_pitch, sum_velocity, MAX_VELOCITY, 0.2, 0.6, 0.4, 0.8)
+	# background
+	target_bg_color = color_from_notes(avg_pitch, clamped_sv, MAX_VELOCITY, 0.2, 0.6, 0.4, 0.8)
 	
+	# distortion
 	target_dist_intensity = clamped_sv / MAX_VELOCITY
 	
-	target_pipe_intensity = BASE_WAVES_INTENSITY + (clamp(pipe_velocity, 0, 100) / 100.0) / 4.0
-	if !pipe_count:
+	# waves - pipe
+	set_pipe_targets(
+		instrument_stats[Globals.InstrumentCategory.PIPE][PITCH],
+		instrument_stats[Globals.InstrumentCategory.PIPE][VELOCITY],
+		instrument_stats[Globals.InstrumentCategory.PIPE][COUNT],
+	)
+	
+
+func set_pipe_targets(sum_pitch, velocity, count):
+	target_pipe_intensity = BASE_WAVES_INTENSITY + (clamp(velocity, 0, 100) / 100.0) / 3.0
+	target_pipe_alpha = clamp(velocity, 0, 100) / 100
+	if !count:
 		#target_pipe_color = Color.TRANSPARENT
 		pass
 	else:
-		target_pipe_color = color_from_notes(pipe_pitch / pipe_count, pipe_velocity, 300, 0.3, 0.9, 0.6, 1.0)
-		
+		var avg_pipe_pitch = sum_pitch / count
+		target_pipe_color = color_from_notes(avg_pipe_pitch, velocity, 300, 0.3, 0.9, 0.6, 0.8)
 
 func _on_midi_receiver_note_on(note_id, note, velocity, track, instrument) -> void:
 	active_notes.append([note_id, track, note, velocity, instrument])
