@@ -5,7 +5,7 @@ uniform float amplitude = 0.3;
 uniform float frequency = 10.0;
 uniform float speed = 3.0;
 uniform vec2 wave_direction = vec2(0.0, 1.0); // Wave propagation direction
-uniform float alpha = 0.8;
+uniform float alpha = 0.0;
 
 uniform vec4 add_color : source_color = vec4(0.0);
 //render_mode blend_add;
