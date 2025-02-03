@@ -27,14 +27,14 @@ func _ready():
 	point_mat.albedo_color = color
 	point_mat.roughness = 0.1 
 	point_mat.metallic = 0.9 
-	point_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	#point_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 
 	sphere.material = point_mat
 	var line_mat: StandardMaterial3D = StandardMaterial3D.new()
 	line_mat.albedo_color = color
 	line_mat.roughness = 0.1
 	line_mat.metallic = 0.9
-	line_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	#line_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 
 	for i in range(16): 
 		var v1 = Vector4(2*(i/8)-1, 2*(i/4%2)-1, 2*(i/2%2)-1, 2*(i%2)-1)
@@ -114,12 +114,12 @@ func create_materials():
 	var point_mat = StandardMaterial3D.new()
 	point_mat.roughness = 0.1 
 	point_mat.metallic = 0.9 
-	point_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	#point_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 
 	var line_mat = StandardMaterial3D.new()
 	line_mat.roughness = 0.1
 	line_mat.metallic = 0.9
-	line_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	#line_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 
 	# Assign materials to meshes
 	for point in points:

@@ -28,11 +28,11 @@ const int linesPerGroup = 10;
 #define drawCrispLine(P, w, t) smoothstep(gridSmoothWidth, 0.0, abs(P - (w) / 2.0 - (t)))
 #define drawPeriodicLine(f, w, t) drawCrispLine(f / 2.0, w, abs(mod(t, f) - f / 2.0))
 
-float minLineWidth() { return 0.2 * (1.0 + 5.0 * width); }
-float maxLineWidth() { return 1.0 * (1.0 + 5.0 * width); }
-float lineSpeed() { return 1.0 * overallSpeed; }
-float warpSpeed() { return 0.2 * overallSpeed; }
-float offsetSpeed() { return 1.33 * overallSpeed; }
+float minLineWidth() { return 0.2 * (1.0 + 8.0 * width); }
+float maxLineWidth() { return 1.0 * (1.0 + 8.0 * width); }
+float lineSpeed() { return 1.0 * overallSpeed / 5.0; }
+float warpSpeed() { return 0.2 * overallSpeed / 5.0; }
+float offsetSpeed() { return 1.33 * overallSpeed / 5.0; }
 
 float random(float t) {
     return (cos(t) + cos(t * 1.3 + 1.3) + cos(t * 1.4 + 1.4)) / 3.0;
@@ -47,17 +47,17 @@ void fragment() {
     vec2 uvOld = UV * 2.0 - 1.0;
 	vec2 uv = vec2(uvOld.y, uvOld.x);
     vec2 space = uv * scale;
-    
+
     // Fade effects
     float horizontalFade = 1.0 - (cos(uv.x * 6.28) * 0.5 + 0.5);
     float verticalFade = 1.0 - (cos(uv.y * 6.28) * 0.5 + 0.5);
-    
+
     // Warp space
     space.y += random(space.x * warpFrequency + TIME * warpSpeed()) * warpAmplitude * (0.5 + horizontalFade);
     space.x += random(space.y * warpFrequency + TIME * warpSpeed() + 2.0) * warpAmplitude * horizontalFade;
-    
+
     vec4 lines = vec4(0.0);
-    
+
     // Draw lines
     for(int l = 0; l < linesPerGroup; l++) {
         float normalizedLineIndex = float(l) / float(linesPerGroup);
@@ -67,19 +67,19 @@ void fragment() {
         float halfWidth = mix(minLineWidth(), maxLineWidth(), rand * horizontalFade) / 2.0;
         float offset = random(offsetPosition + offsetTime * (1.0 + normalizedLineIndex)) * mix(minOffsetSpread, maxOffsetSpread, horizontalFade);
         float linePosition = getPlasmaY(space.x, horizontalFade, offset);
-        
+
         // Line drawing
-        float line = drawSmoothLine(linePosition, halfWidth, space.y) / 2.0 
+        float line = drawSmoothLine(linePosition, halfWidth, space.y) / 2.0
                    + drawCrispLine(linePosition, halfWidth * 0.15, space.y);
-        
+
         // Circle drawing
         float circleX = mod(float(l) + TIME * lineSpeed(), 25.0) - 12.0;
         vec2 circlePosition = vec2(circleX, getPlasmaY(circleX, horizontalFade, offset));
         float circle = drawCircle(circlePosition, 0.01, space) * 4.0;
-        
+
         lines += (line + circle) * lineColor * rand;
     }
-    
+
     // Set final color with transparency
     ALBEDO = lines.rgb * lineColor.a;
     ALPHA = lines.a;

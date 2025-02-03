@@ -33,4 +33,6 @@ void fragment() {
     // Additive color blending (Photoshop-style ADD)
     ALBEDO = add_color.rgb * add_color.a;
 	ALPHA = alpha;
+	ROUGHNESS = 0.4;
+	METALLIC = 0.5;
 }

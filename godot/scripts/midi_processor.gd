@@ -7,6 +7,8 @@ extends Node3D
 
 const MAX_VELOCITY = 1000.0
 const MAX_GUITAR_VELOCITY = 200.0
+const MAX_STRINGS_VELOCITY = 100.0
+const MAX_PIPE_VELOCITY = 100.0
 
 const bg_transition_speed = 0.5
 const dist_transition_speed = 0.8
@@ -22,12 +24,17 @@ var target_waves_intensity: float
 var target_waves_color: Color
 var target_waves_alpha: float
 
-#var target_strings_speed: float
+var target_strings_speed: float
 var target_strings_width: float
 var target_strings_color: Color
 
 var target_tess_speed: float
 var target_tess_color: Color
+
+var target_tadpole_amplitude: float # 0 to 1 - managed in Process
+var target_tadpole_frequency: float # 0 to 1 - managed in Process
+var target_tadpole_color: Color
+#var target_tadpole_speed: float
 
 enum Note {ID, TRACK, PITCH, VELOCITY, INSTRUMENT}
 
@@ -59,13 +66,17 @@ func _ready() -> void:
 	target_waves_intensity = BASE_WAVES_INTENSITY
 	target_waves_alpha = 0;
 	
-	#target_strings_speed = 0.0
+	$Strings.mesh.material.set_shader_parameter("lineColor", Color.TRANSPARENT)
+	target_strings_speed = 0.0
 	target_strings_width = 0.0
 	target_strings_color = Color.TRANSPARENT
 	
 	$Tesseract.color = Color.WHITE
 	target_tess_speed = 0.0
 	target_tess_color = Color.TRANSPARENT
+	
+	$Tadpole.mesh.material.set_shader_parameter("color", Color.TRANSPARENT)
+	target_tadpole_color = Color.TRANSPARENT
 	
 func _process(delta):
 	#if no_notes_played and target_bg_color != Color.BLACK:
@@ -74,14 +85,72 @@ func _process(delta):
 		
 	# TODO: FIX lerp to properly transition according to delta
 	
+	update_background(delta)
+	update_overlay_mat(delta)
+	update_waves_mat(delta)
+	update_strings_mat(delta)
+	update_tadpole(delta)
+	update_tesseract(delta)
+	
+func update_tadpole(delta):
+	var tadpole_mat: ShaderMaterial = $Tadpole.mesh.material
+	var current_tad_min_amp = tadpole_mat.get_shader_parameter("minAmplitude")
+	var new_tad_min_amp = lerp(
+		current_tad_min_amp,
+		0.05 + target_tadpole_amplitude / 10,
+		WAVES_TRANSITION_SPEED * delta,
+	)
+	var current_tad_max_amp = tadpole_mat.get_shader_parameter("maxAmplitude")
+	var new_tad_max_amp = lerp(
+		current_tad_max_amp,
+		0.20 + target_tadpole_amplitude / 5,
+		WAVES_TRANSITION_SPEED * delta,
+	)
+	
+	var current_tad_min_freq = tadpole_mat.get_shader_parameter("minFrequency")
+	var new_tad_min_freq = lerp(
+		current_tad_min_freq,
+		1.0 + target_tadpole_frequency * (2.0),
+		WAVES_TRANSITION_SPEED * delta,
+	)
+	var current_tad_max_freq = tadpole_mat.get_shader_parameter("maxFrequency")
+	var new_tad_max_freq = lerp(
+		current_tad_max_freq,
+		6.5 + target_tadpole_frequency * (3.0),
+		WAVES_TRANSITION_SPEED * delta,
+	)
+	
+	var current_tad_col = tadpole_mat.get_shader_parameter("color")
+	var new_tad_col = lerp_between_colors(
+		current_tad_col,
+		target_tadpole_color,
+		WAVES_TRANSITION_SPEED * 0.5 * delta,
+	)
+	
+	tadpole_mat.set_shader_parameter("minAmplitude", new_tad_min_amp)
+	tadpole_mat.set_shader_parameter("maxAmplitude", new_tad_max_amp)
+	tadpole_mat.set_shader_parameter("minFrequency", new_tad_min_freq)
+	tadpole_mat.set_shader_parameter("maxFrequency", new_tad_max_freq)
+	tadpole_mat.set_shader_parameter("color", new_tad_col)
+	
+func update_tesseract(delta):
+	$Tesseract.speed = lerp($Tesseract.speed, target_tess_speed, WAVES_TRANSITION_SPEED * delta)
+	#$Tesseract.scale = lerp($Tesseract.scale, Vector3(target_guitar_speed,target_guitar_speed,target_guitar_speed), WAVES_TRANSITION_SPEED * delta)
+	#$Tesseract.rotate_z(0.01)
+	$Tesseract.color = lerp_between_colors($Tesseract.color, target_tess_color, WAVES_TRANSITION_SPEED * delta)
+	#print(target_strings_width)
+	
+func update_background(delta):
 	var current_bg_colour = environment.background_color
 	environment.background_color = lerp_between_colors(current_bg_colour, target_bg_color, bg_transition_speed * delta)
 	
+func update_overlay_mat(delta):
 	var overlay_material: ShaderMaterial = overlay.mesh.surface_get_material(0)
 	var current_dist_int = overlay_material.get_shader_parameter("distortion_intensity")
 	var new_dist_int = lerp(current_dist_int, target_dist_intensity, dist_transition_speed * delta)
 	overlay_material.set_shader_parameter("distortion_intensity", new_dist_int)
 	
+func update_waves_mat(delta):
 	var waves_mat: ShaderMaterial = waves.mesh.surface_get_material(0)
 	var current_waves_int = waves_mat.get_shader_parameter("amplitude")
 	var new_waves_intensity = lerp(current_waves_int, target_waves_intensity, WAVES_TRANSITION_SPEED * delta)
@@ -93,9 +162,10 @@ func _process(delta):
 	var new_waves_alpha = lerp(current_waves_alpha, target_waves_alpha, WAVES_TRANSITION_SPEED * delta)
 	waves_mat.set_shader_parameter("alpha", new_waves_alpha)
 	
+func update_strings_mat(delta):
 	var strings_mat: ShaderMaterial = $Strings.mesh.material
-	#var current_strings_speed = strings_mat.get_shader_parameter("overallSpeed")
-	#var new_strings_speed = lerp(current_strings_speed, target_strings_speed, WAVES_TRANSITION_SPEED * delta)
+	var current_strings_speed = strings_mat.get_shader_parameter("overallSpeed")
+	var new_strings_speed = lerp(current_strings_speed, target_strings_speed, WAVES_TRANSITION_SPEED * delta)
 	#strings_mat.set_shader_parameter("overallSpeed", new_strings_speed)
 	var current_strings_width = strings_mat.get_shader_parameter("width")
 	var new_strings_width = lerp(current_strings_width, target_strings_width, WAVES_TRANSITION_SPEED * delta)
@@ -103,12 +173,7 @@ func _process(delta):
 	var current_strings_color = strings_mat.get_shader_parameter("lineColor")
 	var new_strings_color = lerp_between_colors(current_strings_color, target_strings_color, WAVES_TRANSITION_SPEED * delta)
 	strings_mat.set_shader_parameter("lineColor", new_strings_color)
-	 
-	$Tesseract.speed = lerp($Tesseract.speed, target_tess_speed, WAVES_TRANSITION_SPEED * delta)
-	#$Tesseract.scale = lerp($Tesseract.scale, Vector3(target_guitar_speed,target_guitar_speed,target_guitar_speed), WAVES_TRANSITION_SPEED * delta)
-	#$Tesseract.rotate_z(0.01)
-	$Tesseract.color = lerp_between_colors($Tesseract.color, target_tess_color, WAVES_TRANSITION_SPEED * delta)
-	print($Tesseract.color)
+	
 func sigmoid(value: float, steepness: float, midpoint: float) -> float:
 	return 1.0 / (1.0 + exp(-steepness * (value - midpoint)))
 	
@@ -131,7 +196,8 @@ func update_active_notes():
 	if active_notes.is_empty():
 		target_dist_intensity = 0
 		#target_bg_color = Color.BLACK
-		set_waves_targets(0,0,0)
+		set_waves_targets(0,0,0, MAX_PIPE_VELOCITY)
+		set_strings_targets(0,0,0,MAX_STRINGS_VELOCITY)
 		return
 		
 	var instrument_stats = {"total": [0,0]}
@@ -161,44 +227,67 @@ func update_active_notes():
 	target_dist_intensity = clamped_sv / MAX_VELOCITY
 	
 	# waves - pipe
+	var wave_instrument = instrument_stats[Globals.InstrumentCategory.PIPE]
 	set_waves_targets(
-		instrument_stats[Globals.InstrumentCategory.PIPE][PITCH],
-		instrument_stats[Globals.InstrumentCategory.PIPE][VELOCITY],
-		instrument_stats[Globals.InstrumentCategory.PIPE][COUNT],
+		wave_instrument[PITCH],
+		wave_instrument[VELOCITY],
+		wave_instrument[COUNT],
+		MAX_PIPE_VELOCITY, # manually change
 	)
 	
 	# strings
-	#target_strings_speed = 0.05 + (clamp(instrument_stats[Globals.InstrumentCategory.STRINGS][VELOCITY], 0, 100.0) / 100.0) / 4.0
-	var strings_velocity = clamp(instrument_stats[Globals.InstrumentCategory.STRINGS][VELOCITY], 0, 100.0)
-	target_strings_width = strings_velocity / 100.0
-	if !instrument_stats[Globals.InstrumentCategory.STRINGS][COUNT]:
-		target_strings_color.a = strings_velocity / 100.0
-		pass
-	else:
-		var avg_strings_pitch = instrument_stats[Globals.InstrumentCategory.STRINGS][PITCH] / instrument_stats[Globals.InstrumentCategory.STRINGS][COUNT]
-		target_strings_color = color_from_notes(avg_strings_pitch, strings_velocity, 300, 0.3, 0.9, 0.6, 0.8)
-		target_strings_color.a = strings_velocity / 100.0
+	var strings_instrument = instrument_stats[Globals.InstrumentCategory.GUITAR]
+	set_strings_targets(
+		strings_instrument[PITCH],
+		strings_instrument[VELOCITY],
+		strings_instrument[COUNT],
+		MAX_GUITAR_VELOCITY, # manually change
+	)
+	
+	var tadpole_instrument = instrument_stats[Globals.InstrumentCategory.STRINGS]
+	set_tadpole_targets(
+		tadpole_instrument[PITCH],
+		tadpole_instrument[VELOCITY],
+		strings_instrument[COUNT],
+		MAX_STRINGS_VELOCITY, # manually change
+	)
 	
 	# guitar
-	var guitar_velocity = clamp(instrument_stats[Globals.InstrumentCategory.GUITAR][VELOCITY], 0, MAX_GUITAR_VELOCITY)
-	target_tess_speed = 1 + (guitar_velocity / MAX_GUITAR_VELOCITY) * 2
-	var guitar_count = instrument_stats[Globals.InstrumentCategory.GUITAR][COUNT]
-	if !guitar_count:
-		target_tess_color.a = 0.0
-	else:
-		var guitar_avg_pitch = instrument_stats[Globals.InstrumentCategory.GUITAR][PITCH] / guitar_count
-		target_tess_color = color_from_notes(guitar_avg_pitch, guitar_velocity, MAX_GUITAR_VELOCITY, 0.3, 0.9, 0.6, 0.8)
-		target_tess_color.a = guitar_velocity / MAX_GUITAR_VELOCITY
+	#var guitar_velocity = clamp(instrument_stats[Globals.InstrumentCategory.GUITAR][VELOCITY], 0, MAX_GUITAR_VELOCITY)
+	#target_tess_speed = 0.2 + (guitar_velocity / MAX_GUITAR_VELOCITY) * 2.0
+	#var guitar_count = instrument_stats[Globals.InstrumentCategory.GUITAR][COUNT]
+	#if !guitar_count:
+		#target_tess_color = target_bg_color
+		#target_tess_color.a = 0.0
+	#else:
+		#var guitar_avg_pitch = instrument_stats[Globals.InstrumentCategory.GUITAR][PITCH] / guitar_count
+		#target_tess_color = color_from_notes(guitar_avg_pitch, guitar_velocity, MAX_GUITAR_VELOCITY, 0.3, 0.9, 0.6, 0.8)
+		#target_tess_color.a = guitar_velocity / MAX_GUITAR_VELOCITY
 
-func set_waves_targets(sum_pitch, velocity, count):
-	target_waves_intensity = BASE_WAVES_INTENSITY + (clamp(velocity, 0, 100) / 100.0) / 3.0
-	target_waves_alpha = clamp(velocity, 0, 100) / 100
-	if !count:
-		#target_pipe_color = Color.TRANSPARENT
-		pass
-	else:
+func set_tadpole_targets(sum_pitch, sum_velocity, count, max_velocity):
+	sum_velocity = clamp(sum_velocity, 0.0, max_velocity)
+	target_tadpole_amplitude = sum_velocity / max_velocity
+	if count:
+		var avg_pitch = sum_pitch / count
+		target_tadpole_color = color_from_notes(avg_pitch, sum_velocity, max_velocity, 0.3, 0.9, 0.6, 0.8)
+		target_tadpole_frequency = sigmoid(avg_pitch, 0.2, 50)
+	target_tadpole_color.a = 0.5 + (sum_velocity / max_velocity) / 2.0
+
+func set_waves_targets(sum_pitch, velocity, count, max_velocity):
+	target_waves_intensity = BASE_WAVES_INTENSITY + (clamp(velocity, 0, max_velocity) / max_velocity) / 3.0
+	target_waves_alpha = clamp(velocity, 0.0, max_velocity) / max_velocity
+	if count:
 		var avg_waves_pitch = sum_pitch / count
-		target_waves_color = color_from_notes(avg_waves_pitch, velocity, 100, 0.3, 0.9, 0.6, 0.8)
+		target_waves_color = color_from_notes(avg_waves_pitch, velocity, max_velocity, 0.3, 0.9, 0.6, 0.8)
+		
+func set_strings_targets(sum_pitch, sum_velocity, count, max_velocity):
+	sum_velocity = clamp(sum_velocity, 0, max_velocity)
+	target_strings_speed = sum_velocity / max_velocity
+	if count:
+		var avg_strings_pitch = sum_pitch / count
+		target_strings_color = color_from_notes(avg_strings_pitch, sum_velocity, max_velocity, 0.3, 0.9, 0.6, 0.8)
+		target_strings_width = 1.0 - sigmoid(avg_strings_pitch, 0.2, 50)
+	target_strings_color.a = sum_velocity / max_velocity
 
 func _on_midi_receiver_note_on(note_id, note, velocity, track, instrument) -> void:
 	active_notes.append([note_id, track, note, velocity, instrument])
