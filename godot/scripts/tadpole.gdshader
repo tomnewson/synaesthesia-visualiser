@@ -10,6 +10,14 @@ const float bottom = -2.0;
 
 uniform vec4 color : source_color = vec4(0.0);
 
+const float radius = 1.0;
+
+float distort(float axis, float freq, float amp) {
+	return sin(TIME * time_speed + axis * freq) * amp;
+	//return 1.2*((sin(axis * 3.9))/(axis+1.0));
+	//return -sin(1.5*freq*axis)/5.0 + amp*sin(axis) + 1.0;
+}
+
 void vertex() {
 	// Called for every vertex the material is visible on.
 	//VERTEX.y += sin(TIME * 5.0 + VERTEX.z * 10.0) * 0.1;
@@ -18,8 +26,14 @@ void vertex() {
 	float distanceFromCentre = abs(normalizedY - 0.5) * 2.0;
 	float freq = mix(minFrequency, maxFrequency, distanceFromCentre);
 	float amp = mix(minAmplitude, maxAmplitude, 1.0 - distanceFromCentre);
-	VERTEX.x += sin(TIME * time_speed + VERTEX.y * freq) * amp;
+	float d = sqrt((radius*radius)/2.0);
+	VERTEX.x += distort(VERTEX.y, freq, amp);
+	VERTEX.x -= VERTEX.x*distanceFromCentre;
+	VERTEX.z += distort(VERTEX.y, freq, amp);
+	VERTEX.z -= VERTEX.z*distanceFromCentre;
+	//VERTEX.z += distort(VERTEX.y, freq, amp) - (VERTEX.z * normalizedY);
 }
+
 
 void fragment() {
 	// Called for every pixel the material is visible on.

@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://bts85jkpxcyyl"]
+[gd_scene load_steps=31 format=3 uid="uid://bts85jkpxcyyl"]
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scripts/screen_reader.gd" id="6_mtn6x"]
 [ext_resource type="Script" path="res://scripts/midi_receiver.gd" id="6_p3jmh"]
 [ext_resource type="Shader" path="res://scripts/strings.gdshader" id="8_yp5tl"]
+[ext_resource type="Shader" uid="uid://dgh1hihlb3svg" path="res://scripts/collapse.tres" id="9_agaww"]
 [ext_resource type="Shader" path="res://scripts/tadpole.gdshader" id="10_06lji"]
 [ext_resource type="Script" path="res://scripts/tesseract.gd" id="10_6t1d7"]
 
@@ -89,7 +90,7 @@ material = ExtResource("5_3frte")
 flip_faces = true
 size = Vector2(2, 2)
 
-[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_luysi"]
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_l1fd5"]
 friction = 0.0
 bounce = 3.0
 
@@ -120,7 +121,6 @@ shader_parameter/scale = 5.0
 [sub_resource type="PlaneMesh" id="PlaneMesh_grwkl"]
 lightmap_size_hint = Vector2i(3, 3)
 material = SubResource("ShaderMaterial_a7wmh")
-size = Vector2(2, 1)
 subdivide_width = 85
 subdivide_depth = 120
 orientation = 2
@@ -134,6 +134,33 @@ shader_parameter/lineColor = Color(0.25, 0.5, 1, 1)
 shader_parameter/scale = 5.0
 
 [sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_j8qdt"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_2qyos"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_4nlkt"]
+noise = SubResource("FastNoiseLite_2qyos")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yjyh7"]
+render_priority = 0
+shader = ExtResource("9_agaww")
+shader_parameter/albedo = Color(0.75, 0.135, 0.135, 1)
+shader_parameter/point_size = 1.0
+shader_parameter/roughness = 1.0
+shader_parameter/metallic_texture_channel = null
+shader_parameter/specular = 0.5
+shader_parameter/metallic = 0.47
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader_parameter/uv2_scale = Vector3(1, 1, 1)
+shader_parameter/uv2_offset = Vector3(0, 0, 0)
+shader_parameter/progress = 0.5
+shader_parameter/distortionTexture = SubResource("NoiseTexture2D_4nlkt")
+
+[sub_resource type="BoxMesh" id="BoxMesh_bhvr2"]
+material = SubResource("ShaderMaterial_yjyh7")
+subdivide_width = 50
+subdivide_height = 50
+subdivide_depth = 50
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_dvo4d"]
 render_priority = 0
@@ -202,7 +229,7 @@ script = ExtResource("6_mtn6x")
 [node name="Tesseract" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.792)
 visible = false
-physics_material_override = SubResource("PhysicsMaterial_luysi")
+physics_material_override = SubResource("PhysicsMaterial_l1fd5")
 gravity_scale = 0.2
 script = ExtResource("10_6t1d7")
 
@@ -220,7 +247,7 @@ render_target_update_mode = 4
 cull_mask = 2
 
 [node name="Strings" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.07)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.175)
 layers = 3
 mesh = SubResource("PlaneMesh_grwkl")
 
@@ -241,8 +268,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.31816, 0)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
 shape = SubResource("WorldBoundaryShape3D_j8qdt")
 
+[node name="CollapseCube" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.49)
+layers = 3
+mesh = SubResource("BoxMesh_bhvr2")
+
 [node name="Tadpole" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.505)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.73)
 layers = 3
 mesh = SubResource("CylinderMesh_xjv50")
 
