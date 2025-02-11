@@ -32,17 +32,17 @@ uniform float progress: hint_range(0.0, 1.0, 0.1) = 0.5;
 void vertex() {
     vec3 original = VERTEX.xyz;
     float distortion = texture(distortionTexture, UV).r;
-    
+
     // 1. Shrink the cube linearly with progress
     vec3 scaled = original * (1.0 - progress);
-    
+
     // 2. Calculate distortion that intensifies as progress increases
     vec3 displacement = vec3(
         (distortion * 2.0 - 1.0) * progress, // Convert to -1..1 range
         (texture(distortionTexture, UV + vec2(0.3, 0.3)).r * 2.0 - 1.0) * progress, // Offset sample for Y
         (texture(distortionTexture, UV + vec2(0.7, 0.7)).r * 2.0 - 1.0) * progress  // Offset sample for Z
     );
-    
+
     // 3. Apply final position (automatically clamped by original bounds)
     VERTEX.xyz = scaled + displacement;
 	VERTEX.xyz *= 1.0 - progress;

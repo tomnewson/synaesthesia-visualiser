@@ -10,9 +10,44 @@ WIDTH = 1920
 HEIGHT = 1080
 MIN_NOTE = 21   # A0 (first note on a standard 88-key piano)
 MAX_NOTE = 108  # C8 (last note on a standard 88-key piano)
-DEFAULT_FILE = "messiaen_diptyque_part_I_(winitzki)"
+DEFAULT_FILE = "../midi/messiaen_diptyque_part_I_(winitzki).mid"
 FRAMERATE = 60
-NOTE_TYPES = {'note_on', 'note_off'}
+NOTE_TYPES = {'note_on', 'note_off', 'program_change'}
+
+GM_INSTRUMENTS = [
+    "Acoustic Grand Piano", "Bright Acoustic Piano", "Electric Grand Piano", "Honky-tonk Piano",
+    "Electric Piano 1", "Electric Piano 2", "Harpsichord", "Clavinet",
+    "Celesta", "Glockenspiel", "Music Box", "Vibraphone",
+    "Marimba", "Xylophone", "Tubular Bells", "Dulcimer",
+    "Drawbar Organ", "Percussive Organ", "Rock Organ", "Church Organ",
+    "Reed Organ", "Accordion", "Harmonica", "Tango Accordion",
+    "Acoustic Guitar (nylon)", "Acoustic Guitar (steel)", "Electric Guitar (jazz)", "Electric Guitar (clean)",
+    "Electric Guitar (muted)", "Overdriven Guitar", "Distortion Guitar", "Guitar harmonics",
+    "Acoustic Bass", "Electric Bass (finger)", "Electric Bass (pick)", "Fretless Bass",
+    "Slap Bass 1", "Slap Bass 2", "Synth Bass 1", "Synth Bass 2",
+    "Violin", "Viola", "Cello", "Contrabass",
+    "Tremolo Strings", "Pizzicato Strings", "Orchestral Harp", "Timpani",
+    "String Ensemble 1", "String Ensemble 2", "SynthStrings 1", "SynthStrings 2",
+    "Choir Aahs", "Voice Oohs", "Synth Voice", "Orchestra Hit",
+    "Trumpet", "Trombone", "Tuba", "Muted Trumpet",
+    "French Horn", "Brass Section", "SynthBrass 1", "SynthBrass 2",
+    "Soprano Sax", "Alto Sax", "Tenor Sax", "Baritone Sax",
+    "Oboe", "English Horn", "Bassoon", "Clarinet",
+    "Piccolo", "Flute", "Recorder", "Pan Flute",
+    "Blown Bottle", "Shakuhachi", "Whistle", "Ocarina",
+    "Lead 1 (square)", "Lead 2 (sawtooth)", "Lead 3 (calliope)", "Lead 4 (chiff)",
+    "Lead 5 (charang)", "Lead 6 (voice)", "Lead 7 (fifths)", "Lead 8 (bass + lead)",
+    "Pad 1 (new age)", "Pad 2 (warm)", "Pad 3 (polysynth)", "Pad 4 (choir)",
+    "Pad 5 (bowed)", "Pad 6 (metallic)", "Pad 7 (halo)", "Pad 8 (sweep)",
+    "FX 1 (rain)", "FX 2 (soundtrack)", "FX 3 (crystal)", "FX 4 (atmosphere)",
+    "FX 5 (brightness)", "FX 6 (goblins)", "FX 7 (echoes)", "FX 8 (sci-fi)",
+    "Sitar", "Banjo", "Shamisen", "Koto",
+    "Kalimba", "Bag pipe", "Fiddle", "Shanai",
+    "Tinkle Bell", "Agogo", "Steel Drums", "Woodblock",
+    "Taiko Drum", "Melodic Tom", "Synth Drum", "Reverse Cymbal",
+    "Guitar Fret Noise", "Breath Noise", "Seashore", "Bird Tweet",
+    "Telephone Ring", "Helicopter", "Applause", "Gunshot"
+]
 
 # SYNAESTHETIC MAPPINGS
 # height increases with pitch
@@ -49,12 +84,12 @@ def note_to_color(note):
 
 class Note:
     """Represents a musical note in the visualization."""
-    def __init__(self, msg, track):
+    def __init__(self, msg):
         self.note = msg.note
         self.channel = msg.channel
         self.active = True
         self.finished = False
-        self.x = remap(track or 0, 0, num_tracks-1, WIDTH * 0.1, WIDTH * 0.9)
+        self.x = remap(msg.channel or 0, 0, num_channels-1, WIDTH * 0.1, WIDTH * 0.9)
         self.y = remap(self.note, MIN_NOTE, MAX_NOTE, HEIGHT, 0)
         self.size = remap(self.note, MIN_NOTE, MAX_NOTE, 50, 5)
         self.color = note_to_color(self.note)
@@ -85,40 +120,29 @@ class Note:
         # Copy the shape onto the main surface
         surface.blit(shape_surface, (int(self.x - self.size), int(self.y - self.size)))
 
-def generate_note_events(events: list, tracks: list):
-    print(f"Extracting notes into {num_tracks} tracks...")
+def generate_note_events(events: list):
     current_time = 0
     note_events = []
-    mid_length = len(events)
+    max_channel = 0
 
-    for mid_i, mid_msg in enumerate(events):
+    for mid_msg in events:
         current_time += mid_msg.time
         if mid_msg.type not in NOTE_TYPES:
             continue
 
-        print(f"Processing message {mid_i}/{mid_length}", end='     \r')
+        if mid_msg.type == 'note_on' and mid_msg.velocity == 0:
+            mid_msg = mido.Message('note_off', note=mid_msg.note, channel=mid_msg.channel)
 
-        # find matching event in tracks
-        found = False
-        for track_i in range(num_tracks):
-            track = tracks[track_i]
-            if mid_msg in track:
-                note_events.append({'time': current_time, 'track': track_i, 'message': mid_msg})
-                track.remove(mid_msg)
-                found = True
-                break
+        note_events.append({'time': current_time, 'message': mid_msg})
+        max_channel = max(max_channel, mid_msg.channel)
 
-        if not found:
-            # note events do not always belong to a track, but we can't just ignore them!
-            # i think this only applies to note_off events
-            note_events.append({'time': current_time, 'track': None, 'message': mid_msg})
     print()
-    return note_events
+    return note_events, max_channel
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--midi", type=str, default=DEFAULT_FILE, help="MIDI filename to load (without extension)")
+parser.add_argument("--midi", type=str, default=DEFAULT_FILE, help="MIDI path")
 args = parser.parse_args()
-midi_file = f'../midi/{args.midi}.mid'
+midi_file = args.midi
 
 # Setup Chordino with one of several parameters that can be passed
 chordino = Chordino(roll_on=1)
@@ -128,12 +152,14 @@ conversion_file_path = chordino.preprocess(midi_file)
 
 # Load MIDI file and extract messages as note events
 mid = mido.MidiFile(midi_file)
-num_tracks = len(mid.tracks)
 
 for i, track in enumerate(mid.tracks):
     print(f"Track {i}: {track.name} ({len(track)} messages)")
 
-note_events = generate_note_events(list(mid), mid.tracks)
+note_events, max_channel = generate_note_events(list(mid))
+num_channels = max_channel + 1
+
+print(f"Number of channels: {num_channels}")
 
 # Create the display surface
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -174,14 +200,16 @@ def main():
         while next_event_index < len(note_events) and note_events[next_event_index]['time'] <= elapsed_time:
             event = note_events[next_event_index]
             msg = event['message']
-            track = event['track']
-            if msg.type == 'note_on' and msg.velocity > 0:
-                active_notes.append(Note(msg, track))
-            elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+            if msg.type == 'program_change':
+                print(f"Channel {msg.channel}, instrument: {GM_INSTRUMENTS[msg.program]}")
+
+            if msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
                 for note in active_notes:
                     if note.note == msg.note and note.active and note.channel == msg.channel:
                         note.note_off()
                         break
+            elif msg.type == 'note_on':
+                active_notes.append(Note(msg))
             next_event_index += 1
 
         # Update and draw active notes

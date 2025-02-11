@@ -84,6 +84,7 @@ func _ready() -> void:
 	target_tadpole_color = Color.TRANSPARENT
 	
 	$CollapseCube.mesh.material.set_shader_parameter("albedo", Color.BLACK)
+	$CollapseCube.mesh.material.set_shader_parameter("progress", 0.0)
 	target_cube_color = Color.BLACK
 	
 func _process(delta):
@@ -113,7 +114,7 @@ func update_cube(delta):
 	var current_prog = cube_mat.get_shader_parameter("progress")
 	cube_speed = lerp(cube_speed, target_cube_speed, WAVES_TRANSITION_SPEED * delta)
 	var new_prog = current_prog + (0.02 * cube_speed)
-	if new_prog >= 1.0:
+	if new_prog >= 0.8:
 		new_prog = 0.0
 	cube_mat.set_shader_parameter("progress", new_prog)
 

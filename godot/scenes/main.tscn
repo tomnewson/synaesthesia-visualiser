@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://bts85jkpxcyyl"]
+[gd_scene load_steps=33 format=3 uid="uid://bts85jkpxcyyl"]
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/midi_receiver.gd" id="6_p3jmh"]
 [ext_resource type="Shader" path="res://scripts/strings.gdshader" id="8_yp5tl"]
 [ext_resource type="Shader" uid="uid://dgh1hihlb3svg" path="res://scripts/collapse.tres" id="9_agaww"]
+[ext_resource type="Script" path="res://scenes/collapse_sphere.gd" id="10_1v8cc"]
 [ext_resource type="Shader" path="res://scripts/tadpole.gdshader" id="10_06lji"]
 [ext_resource type="Script" path="res://scripts/tesseract.gd" id="10_6t1d7"]
 
@@ -90,7 +91,7 @@ material = ExtResource("5_3frte")
 flip_faces = true
 size = Vector2(2, 2)
 
-[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_l1fd5"]
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_5rweh"]
 friction = 0.0
 bounce = 3.0
 
@@ -153,7 +154,7 @@ shader_parameter/uv1_scale = Vector3(1, 1, 1)
 shader_parameter/uv1_offset = Vector3(0, 0, 0)
 shader_parameter/uv2_scale = Vector3(1, 1, 1)
 shader_parameter/uv2_offset = Vector3(0, 0, 0)
-shader_parameter/progress = 0.5
+shader_parameter/progress = 0.0
 shader_parameter/distortionTexture = SubResource("NoiseTexture2D_4nlkt")
 
 [sub_resource type="BoxMesh" id="BoxMesh_bhvr2"]
@@ -161,6 +162,8 @@ material = SubResource("ShaderMaterial_yjyh7")
 subdivide_width = 50
 subdivide_height = 50
 subdivide_depth = 50
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_br7gb"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_dvo4d"]
 render_priority = 0
@@ -194,6 +197,7 @@ light_energy = 2.378
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.550254, 0.614948)
+visible = false
 layers = 3
 light_energy = 4.062
 
@@ -227,9 +231,9 @@ skeleton = NodePath("")
 script = ExtResource("6_mtn6x")
 
 [node name="Tesseract" type="RigidBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.792)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.852)
 visible = false
-physics_material_override = SubResource("PhysicsMaterial_l1fd5")
+physics_material_override = SubResource("PhysicsMaterial_5rweh")
 gravity_scale = 0.2
 script = ExtResource("10_6t1d7")
 
@@ -270,11 +274,19 @@ shape = SubResource("WorldBoundaryShape3D_j8qdt")
 
 [node name="CollapseCube" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.49)
+visible = false
 layers = 3
 mesh = SubResource("BoxMesh_bhvr2")
 
+[node name="CollapseSphere" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.49)
+layers = 3
+mesh = SubResource("ArrayMesh_br7gb")
+script = ExtResource("10_1v8cc")
+
 [node name="Tadpole" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.73)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.75)
+visible = false
 layers = 3
 mesh = SubResource("CylinderMesh_xjv50")
 

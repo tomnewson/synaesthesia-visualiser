@@ -46,7 +46,7 @@ def note_to_color(note):
     return (color.r, color.g, color.b)
 
 # Load MIDI file and extract messages as note events
-mid = mido.MidiFile(f'midi/{FILE_NAME}.mid')
+mid = mido.MidiFile(f'zmidi/{FILE_NAME}.mid')
 note_events = []
 current_time = 0
 
