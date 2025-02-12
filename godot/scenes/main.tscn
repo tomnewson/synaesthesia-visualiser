@@ -1,14 +1,13 @@
-[gd_scene load_steps=33 format=3 uid="uid://bts85jkpxcyyl"]
+[gd_scene load_steps=26 format=3 uid="uid://bts85jkpxcyyl"]
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
+[ext_resource type="PackedScene" uid="uid://cy5368pba2n3j" path="res://scenes/midi_receiver.tscn" id="3_q3lke"]
 [ext_resource type="Material" uid="uid://ua4rqa7bo2pd" path="res://data/screen_reader_material.tres" id="5_3frte"]
-[ext_resource type="Shader" path="res://scripts/waves.gdshader" id="6_hwyg6"]
 [ext_resource type="Script" path="res://scripts/screen_reader.gd" id="6_mtn6x"]
-[ext_resource type="Script" path="res://scripts/midi_receiver.gd" id="6_p3jmh"]
+[ext_resource type="PackedScene" uid="uid://hstcclti5c4p" path="res://scenes/waves.tscn" id="7_le7pq"]
 [ext_resource type="Shader" path="res://scripts/strings.gdshader" id="8_yp5tl"]
-[ext_resource type="Shader" uid="uid://dgh1hihlb3svg" path="res://scripts/collapse.tres" id="9_agaww"]
-[ext_resource type="Script" path="res://scenes/collapse_sphere.gd" id="10_1v8cc"]
+[ext_resource type="PackedScene" uid="uid://dnm4sj83mwp0i" path="res://scenes/collapsing_cube.tscn" id="9_1mylh"]
 [ext_resource type="Shader" path="res://scripts/tadpole.gdshader" id="10_06lji"]
 [ext_resource type="Script" path="res://scripts/tesseract.gd" id="10_6t1d7"]
 
@@ -91,25 +90,9 @@ material = ExtResource("5_3frte")
 flip_faces = true
 size = Vector2(2, 2)
 
-[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_5rweh"]
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_unuhd"]
 friction = 0.0
 bounce = 3.0
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_sqfg8"]
-render_priority = 0
-shader = ExtResource("6_hwyg6")
-shader_parameter/amplitude = 0.3
-shader_parameter/frequency = 10.0
-shader_parameter/speed = 3.0
-shader_parameter/wave_direction = Vector2(0, 1)
-shader_parameter/alpha = 0.8
-shader_parameter/add_color = Color(0.2904, 0.771907, 0.88, 0.392157)
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_3se3j"]
-material = SubResource("ShaderMaterial_sqfg8")
-size = Vector2(6, 2)
-subdivide_width = 105
-subdivide_depth = 105
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_a7wmh"]
 render_priority = 0
@@ -136,34 +119,7 @@ shader_parameter/scale = 5.0
 
 [sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_j8qdt"]
 
-[sub_resource type="FastNoiseLite" id="FastNoiseLite_2qyos"]
-
-[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_4nlkt"]
-noise = SubResource("FastNoiseLite_2qyos")
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_yjyh7"]
-render_priority = 0
-shader = ExtResource("9_agaww")
-shader_parameter/albedo = Color(0.75, 0.135, 0.135, 1)
-shader_parameter/point_size = 1.0
-shader_parameter/roughness = 1.0
-shader_parameter/metallic_texture_channel = null
-shader_parameter/specular = 0.5
-shader_parameter/metallic = 0.47
-shader_parameter/uv1_scale = Vector3(1, 1, 1)
-shader_parameter/uv1_offset = Vector3(0, 0, 0)
-shader_parameter/uv2_scale = Vector3(1, 1, 1)
-shader_parameter/uv2_offset = Vector3(0, 0, 0)
-shader_parameter/progress = 0.0
-shader_parameter/distortionTexture = SubResource("NoiseTexture2D_4nlkt")
-
-[sub_resource type="BoxMesh" id="BoxMesh_bhvr2"]
-material = SubResource("ShaderMaterial_yjyh7")
-subdivide_width = 50
-subdivide_height = 50
-subdivide_depth = 50
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_br7gb"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_075rg"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_dvo4d"]
 render_priority = 0
@@ -206,8 +162,7 @@ script = ExtResource("3_1tp21")
 file = "res://midi/in_a_mellow_tone_djl.mid"
 soundfont = "res://data/Timbres of Heaven (XGM) 4.00(G).sf2"
 
-[node name="MidiReceiver" type="Node" parent="."]
-script = ExtResource("6_p3jmh")
+[node name="MidiReceiver" parent="." instance=ExtResource("3_q3lke")]
 
 [node name="Camera3D" type="Camera3D" parent="."]
 cull_mask = 1048573
@@ -233,14 +188,11 @@ script = ExtResource("6_mtn6x")
 [node name="Tesseract" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.852)
 visible = false
-physics_material_override = SubResource("PhysicsMaterial_5rweh")
+physics_material_override = SubResource("PhysicsMaterial_unuhd")
 gravity_scale = 0.2
 script = ExtResource("10_6t1d7")
 
-[node name="Waves" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.942057, -0.335452, 0, 0.335452, 0.942057, 0, -0.24026, -1.1051)
-layers = 3
-mesh = SubResource("PlaneMesh_3se3j")
+[node name="Waves" parent="." instance=ExtResource("7_le7pq")]
 
 [node name="WavesViewport" type="SubViewport" parent="."]
 transparent_bg = true
@@ -272,17 +224,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.31816, 0)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
 shape = SubResource("WorldBoundaryShape3D_j8qdt")
 
-[node name="CollapseCube" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.49)
+[node name="CollapseCube" parent="." instance=ExtResource("9_1mylh")]
 visible = false
-layers = 3
-mesh = SubResource("BoxMesh_bhvr2")
 
 [node name="CollapseSphere" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.49)
 layers = 3
-mesh = SubResource("ArrayMesh_br7gb")
-script = ExtResource("10_1v8cc")
+mesh = SubResource("ArrayMesh_075rg")
 
 [node name="Tadpole" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.75)
@@ -290,8 +238,6 @@ visible = false
 layers = 3
 mesh = SubResource("CylinderMesh_xjv50")
 
-[connection signal="midi_event" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_midi_event"]
+[connection signal="midi_event" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_arlez_midi_player_midi_event"]
 [connection signal="note_off" from="MidiReceiver" to="." method="_on_midi_receiver_note_off"]
-[connection signal="note_off" from="MidiReceiver" to="Camera3D/Synaesthesia" method="_on_midi_receiver_note_off"]
 [connection signal="note_on" from="MidiReceiver" to="." method="_on_midi_receiver_note_on"]
-[connection signal="note_on" from="MidiReceiver" to="Camera3D/Synaesthesia" method="_on_midi_receiver_note_on"]

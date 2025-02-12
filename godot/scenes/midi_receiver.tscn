@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cy5368pba2n3j"]
+
+[ext_resource type="Script" path="res://scripts/midi_receiver.gd" id="1_lpckf"]
+
+[node name="MidiReceiver" type="Node"]
+script = ExtResource("1_lpckf")

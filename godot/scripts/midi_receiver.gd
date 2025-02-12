@@ -49,7 +49,7 @@ func get_instrument_category(program_number: int) -> int:
 func _note_id(channel, event): 
 	return str(channel.get_instance_id()) + str(event.note)
 
-func _on_midi_event(channel: MidiPlayerAddon.GodotMIDIPlayerChannelStatus, event: SMF.MIDIEvent):
+func _on_arlez_midi_player_midi_event(channel: MidiPlayerAddon.GodotMIDIPlayerChannelStatus, event: Variant) -> void:
 	match event.type:
 		SMF.MIDIEventType.program_change:
 			var category = get_instrument_category(event.number)

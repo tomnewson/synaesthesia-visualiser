@@ -359,9 +359,9 @@ func set_strings_targets(sum_pitch, sum_velocity, count, max_velocity):
 
 func _on_midi_receiver_note_on(note_id, note, velocity, track, instrument) -> void:
 	active_notes.append([note_id, track, note, velocity, instrument])
+	print("hi")
 	update_active_notes()
 	
-
 func _on_midi_receiver_note_off(note_id, track) -> void:
 	for n in active_notes:
 		if n[Note.ID] == note_id:
