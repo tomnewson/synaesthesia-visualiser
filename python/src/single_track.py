@@ -1,9 +1,25 @@
+"""Provides a visualizer for MIDI music, focusing on a single track representation.
+
+The module includes classes for handling notes and the overall visualization,
+allowing for a dynamic and colorful representation of MIDI data. It uses Pygame
+for rendering and provides a way to map MIDI notes to visual elements like
+position, size, and color.
+
+Classes:
+    SingleTrackNote: Represents a single note with properties like position, size,
+                     color, and methods for updating and drawing the note.
+    SingleTrackVisualizer: Manages the visualization of a single track MIDI file,
+                           including loading the MIDI file, creating notes, and
+                           running the main visualization loop.
+
+Functions:
+    remap: Linearly maps a value from one range to another.
+    note_to_axis: Maps a MIDI note number to an axis position on the screen.
+    note_to_color: Maps a MIDI note number to a color.
+"""
 import math
-import sys
-import mido
 import pygame
-from chord_extractor.extractors import Chordino
-import librosa  # Import librosa
+from visualiser import BaseVisualizer, Note # Import BaseVisualizer
 
 # Constants
 WIDTH = 1920
@@ -40,25 +56,16 @@ def note_to_color(note):
     return color
 
 
-class Note:
-    """Represents a musical note in the visualization."""
+class SingleTrackNote(Note):
+    """Represents a musical note in the single track visualization."""
 
     def __init__(self, msg, elapsed_time):
-        self.note = msg.note
+        super().__init__(msg, elapsed_time)
         self.velocity = msg.velocity
-        self.start_time = elapsed_time
-        self.end_time = None
-        self.active = True
-        self.finished = False
         self.x = note_to_axis(self.note, WIDTH)
         self.y = HEIGHT / 2
         self.size = remap(self.velocity, 0, 127, 10, 50 * CIRCLE_SCALE)
         self.color = note_to_color(self.note)
-
-    def note_off(self, elapsed_time):
-        """Handles the note-off event."""
-        self.end_time = elapsed_time
-        self.active = False
 
     def update(self, elapsed_time):
         """Update the note's position and size."""
@@ -83,109 +90,15 @@ class Note:
         surface.blit(shape_surface, (int(self.x - self.size), int(self.y - self.size)), special_flags=pygame.BLEND_ADD)
 
 
-class Visualizer:
-    """Encapsulates the visualization logic."""
+class SingleTrackVisualizer(BaseVisualizer):
+    """Visualizer for a single track MIDI file."""
 
-    def __init__(self):
-        pygame.init()
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.display.set_caption("MIDI Visualization")
-        self.clock = pygame.time.Clock()
-        pygame.font.init()
-        self.font = pygame.font.SysFont('Arial', 50)
-        self.note_events = []
-        self.active_notes = []
-        self.next_event_index = 0
-        self.start_time = None
-        self.offset = 0
-        self.game_state = "ready"
-        self.audio_onset_time = 0
-        self.conversion_file_path = None
-
-    def load_midi(self, midi_path):
-        """Load the MIDI file and extract note events."""
-        mid = mido.MidiFile(midi_path)
-        current_time = 0
-        for track in mid.tracks:
-            print(track.name)
-        for msg in mid:
-            current_time += msg.time
-            if msg.type == 'note_on' and msg.velocity == 0:
-                msg = mido.Message('note_off', note=msg.note, channel=msg.channel)
-            if msg.type in ['note_on', 'note_off']:
-                self.note_events.append({'time': current_time, 'message': msg})
-
-    def setup(self):
-        """Initialize pygame, the display, and audio playback."""
-        self.screen.fill((0, 0, 0))
-        chordino = Chordino(roll_on=1)
-
-        print("Converting midi to wav...")
-        self.conversion_file_path = chordino.preprocess(MIDI_PATH)
-
-        print("Calculating wav/midi offset...")
-        y, sr = librosa.load(self.conversion_file_path)
-        onset_env = librosa.onset.onset_strength(y=y, sr=sr)
-        onset_frames = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr)
-        self.audio_onset_time = librosa.frames_to_time(onset_frames[0], sr=sr) if len(onset_frames) > 0 else 0
-
-        midi_onset_time = self.note_events[0]['time'] if self.note_events else 0
-        self.offset = self.audio_onset_time - midi_onset_time
-        print(f"wav/midi offset: {self.offset:.3f}s")
-
-        pygame.mixer.init()
-        pygame.mixer.music.load(self.conversion_file_path)
-
-    def main_loop(self):
-        """Main loop for handling events, updating, and drawing."""
-        running = True
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN and self.game_state == "ready":
-                        self.game_state = "playing"
-                        pygame.mixer.music.play()
-                        self.start_time = pygame.time.get_ticks()
-
-            self.screen.fill((0, 0, 0))
-
-            if self.game_state == "ready":
-                text_surface = self.font.render('Ready, press ENTER to play', True, (255, 255, 255))
-                text_rect = text_surface.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-                self.screen.blit(text_surface, text_rect)
-            elif self.game_state == "playing":
-                elapsed_time = (pygame.time.get_ticks() - self.start_time) / 1000.0
-
-                while self.next_event_index < len(self.note_events) and \
-                        self.note_events[self.next_event_index]['time'] + self.offset <= elapsed_time:
-                    event_dict = self.note_events[self.next_event_index]
-                    msg = event_dict['message']
-                    if msg.type == 'note_on':
-                        self.active_notes.append(Note(msg, elapsed_time))
-                    elif msg.type == 'note_off':
-                        for note in self.active_notes:
-                            if note.note == msg.note and note.active:
-                                note.note_off(elapsed_time)
-                                break
-                    self.next_event_index += 1
-
-                for note in self.active_notes[:]:
-                    note.update(elapsed_time)
-                    note.draw(self.screen)
-                    if note.finished:
-                        self.active_notes.remove(note)
-
-            pygame.display.flip()
-            self.clock.tick(60)
-
-        pygame.quit()
-        sys.exit()
-
+    def create_note(self, msg, elapsed_time):
+        """Create a Note object."""
+        return SingleTrackNote(msg, elapsed_time)
 
 if __name__ == '__main__':
-    visualizer = Visualizer()
-    visualizer.load_midi(MIDI_PATH)
+    visualizer = SingleTrackVisualizer(MIDI_PATH)
+    visualizer.load_midi()
     visualizer.setup()
     visualizer.main_loop()
