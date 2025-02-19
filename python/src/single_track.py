@@ -131,7 +131,7 @@ class Visualizer:
 
         midi_onset_time = self.note_events[0]['time'] if self.note_events else 0
         self.offset = self.audio_onset_time - midi_onset_time
-        print(f"wav/midi offset: {self.offset:3}ms")
+        print(f"wav/midi offset: {self.offset:.3f}s")
 
         pygame.mixer.init()
         pygame.mixer.music.load(self.conversion_file_path)

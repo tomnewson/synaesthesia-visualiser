@@ -3,16 +3,21 @@ import pygame
 import math
 import argparse
 from chord_extractor.extractors import Chordino
+import librosa  # Import librosa
+import sys
 
 pygame.init()
 
+# Constants
 WIDTH = 1920
 HEIGHT = 1080
-MIN_NOTE = 21   # A0 (first note on a standard 88-key piano)
+MIN_NOTE = 21  # A0 (first note on a standard 88-key piano)
 MAX_NOTE = 108  # C8 (last note on a standard 88-key piano)
 DEFAULT_FILE = "../godot/midi/5th-Symphony-Part-1.mid"
 FRAMERATE = 60
 NOTE_TYPES = {'note_on', 'note_off', 'program_change'}
+CIRCLE_SCALE = 10
+MIDI_PATH = "../godot/midi/la_campanella.mid"
 
 GM_INSTRUMENTS = [
     "Acoustic Grand Piano", "Bright Acoustic Piano", "Electric Grand Piano", "Honky-tonk Piano",
@@ -21,7 +26,8 @@ GM_INSTRUMENTS = [
     "Marimba", "Xylophone", "Tubular Bells", "Dulcimer",
     "Drawbar Organ", "Percussive Organ", "Rock Organ", "Church Organ",
     "Reed Organ", "Accordion", "Harmonica", "Tango Accordion",
-    "Acoustic Guitar (nylon)", "Acoustic Guitar (steel)", "Electric Guitar (jazz)", "Electric Guitar (clean)",
+    "Acoustic Guitar (nylon)", "Acoustic Guitar (steel)", "Electric Guitar (jazz)",
+    "Electric Guitar (clean)",
     "Electric Guitar (muted)", "Overdriven Guitar", "Distortion Guitar", "Guitar harmonics",
     "Acoustic Bass", "Electric Bass (finger)", "Electric Bass (pick)", "Fretless Bass",
     "Slap Bass 1", "Slap Bass 2", "Synth Bass 1", "Synth Bass 2",
@@ -49,182 +55,195 @@ GM_INSTRUMENTS = [
     "Telephone Ring", "Helicopter", "Applause", "Gunshot"
 ]
 
-# SYNAESTHETIC MAPPINGS
-# height increases with pitch
-# brightness increases with pitch
-# size decreases with pitch
 
-# what should change with time? - atm size increases with time
-# split tracks left to right
-# fade/shrink out notes after they end
+# --- Helper functions ---
 
 def remap(value, left_min, left_max, right_min, right_max):
-    """Re-maps a number from one range to another."""
-    # Avoid division by zero
-    if left_max - left_min == 0:
-        return right_min
-    # Figure out how 'wide' each range is
+    """Linearly maps a value from one range to another."""
     left_span = left_max - left_min
     right_span = right_max - right_min
-
-    # Convert the left range into a 0-1 range (float)
     value_scaled = float(value - left_min) / float(left_span)
-
-    # Convert the 0-1 range into a value in the right range
     return right_min + (value_scaled * right_span)
 
-def note_to_color(note):
-    """Map MIDI note number to an RGB color."""
-    hue = remap(note, MAX_NOTE, MIN_NOTE, 0, 360)
-    value = remap(note, MIN_NOTE, MAX_NOTE, 50, 100)
 
+def note_to_axis(note, max_val):
+    """Map MIDI note number to an axis position on the screen."""
+    return remap(note, MIN_NOTE, MAX_NOTE, 0, max_val)
+
+
+def note_to_color(note):
+    """Map a MIDI note number to a color.
+
+    Converts an HSB (with hue in [0,360]) color to an RGB tuple.
+    """
+    hue = remap(note, MIN_NOTE, MAX_NOTE, 0, 360)
     color = pygame.Color(0)
-    color.hsva = (hue, 100, value, 100)  # Hue, Saturation, Value, Alpha
+    color.hsva = (hue, 100, 100, 100)  # Hue, Saturation, Value, Alpha
     return color
 
 class Note:
     """Represents a musical note in the visualization."""
-    def __init__(self, msg):
+
+    def __init__(self, msg, elapsed_time, num_channels):
         self.note = msg.note
         self.channel = msg.channel
         self.active = True
+        self.start_time = elapsed_time
+        self.end_time = None
         self.finished = False
-        self.x = remap(msg.channel or 0, 0, num_channels-1, WIDTH * 0.1, WIDTH * 0.9)
+        self.x = WIDTH // 2 if num_channels <= 1 else remap(msg.channel or 0, 0, num_channels - 1, WIDTH * 0.1, WIDTH * 0.9)
         self.y = remap(self.note, MIN_NOTE, MAX_NOTE, HEIGHT, 0)
         self.size = remap(self.note, MIN_NOTE, MAX_NOTE, 50, 5)
         self.color = note_to_color(self.note)
 
-    def note_off(self):
+    def note_off(self, elapsed_time):
+        """Handles the note-off event."""
+        self.end_time = elapsed_time
         self.active = False
 
-    def update(self):
+    def update(self, elapsed_time):
+        """Update the note's position and size."""
         if self.active:
             self.size += math.log10(self.size) * 0.2
-            return
+        else:
+            time_since_end = elapsed_time - self.end_time
+            self.size = max(0, self.size - (time_since_end * CIRCLE_SCALE * 5))
+            self.color.a = max(0, 255 - int(time_since_end * 50))
 
-        self.size = max(0, self.size - 1)  # Shrink after note ends
-        self.color.a = max(0, self.color.a - 10)  # Fade out
-        if self.size <= 0 or self.color.a <= 0:
-            self.finished = True
+            if self.size <= 0 or self.color.a <= 0:
+                self.finished = True
 
     def draw(self, surface):
+        """Draw the note on the surface."""
         if self.size <= 0 or self.color.a <= 0:
-            return  # Skip drawing if the note is invisible
+            return
 
-        # Draw a shape (circle) with an alpha value
-        # size is the radius of the circle
         shape_size = int(self.size * 2)
         shape_surface = pygame.Surface((shape_size, shape_size), pygame.SRCALPHA)
         pygame.draw.circle(shape_surface, self.color, (shape_size // 2, shape_size // 2), int(self.size))
+        surface.blit(shape_surface, (int(self.x - self.size), int(self.y - self.size)),
+                     special_flags=pygame.BLEND_ADD)
 
-        # Copy the shape onto the main surface
-        surface.blit(shape_surface, (int(self.x - self.size), int(self.y - self.size)))
 
-def generate_note_events(events: list):
-    current_time = 0
-    note_events = []
-    max_channel = 0
+class Visualizer:
+    """Encapsulates the visualization logic."""
 
-    for mid_msg in events:
-        current_time += mid_msg.time
-        if mid_msg.type not in NOTE_TYPES:
-            continue
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        pygame.display.set_caption("MIDI Visualization")
+        self.clock = pygame.time.Clock()
+        pygame.font.init()
+        self.font = pygame.font.SysFont('Arial', 50)
+        self.note_events = []
+        self.active_notes = []
+        self.next_event_index = 0
+        self.start_time = None
+        self.offset = 0
+        self.game_state = "ready"
+        self.audio_onset_time = 0
+        self.conversion_file_path = None
+        self.num_channels = 1  # Default value
+        self.max_channel = 0
 
-        if mid_msg.type == 'note_on' and mid_msg.velocity == 0:
-            mid_msg = mido.Message('note_off', note=mid_msg.note, channel=mid_msg.channel)
+    def load_midi(self, midi_path):
+        """Load the MIDI file and extract note events."""
+        mid = mido.MidiFile(midi_path)
+        current_time = 0
 
-        note_events.append({'time': current_time, 'message': mid_msg})
-        max_channel = max(max_channel, mid_msg.channel)
+        for i, track in enumerate(mid.tracks):
+            print(f"Track {i}: {track.name} ({len(track)} messages)")
 
-    print()
-    return note_events, max_channel
+        for msg in mid:
+            current_time += msg.time
+            if msg.type not in NOTE_TYPES:
+                continue
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--midi", type=str, default=DEFAULT_FILE, help="MIDI path")
-args = parser.parse_args()
-midi_file = args.midi
+            if msg.type == 'note_on' and msg.velocity == 0:
+                msg = mido.Message('note_off', note=msg.note, channel=msg.channel)
 
-# Setup Chordino with one of several parameters that can be passed
-chordino = Chordino(roll_on=1)
+            self.note_events.append({'time': current_time, 'message': msg})
+            self.max_channel = max(self.max_channel, msg.channel)
 
-print("Preprocessing midi file...")
-conversion_file_path = chordino.preprocess(midi_file)
+        self.num_channels = self.max_channel + 1
+        print(f"Number of channels: {self.num_channels}")
 
-# Load MIDI file and extract messages as note events
-mid = mido.MidiFile(midi_file)
+    def setup(self):
+        """Initialize pygame, the display, and audio playback."""
+        self.screen.fill((0, 0, 0))
+        chordino = Chordino(roll_on=1)
 
-for i, track in enumerate(mid.tracks):
-    print(f"Track {i}: {track.name} ({len(track)} messages)")
+        print("Converting midi to wav...")
+        self.conversion_file_path = chordino.preprocess(MIDI_PATH)
 
-note_events, max_channel = generate_note_events(list(mid))
-num_channels = max_channel + 1
+        print("Calculating wav/midi offset...")
+        y, sr = librosa.load(self.conversion_file_path)
+        onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+        onset_frames = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr)
+        self.audio_onset_time = librosa.frames_to_time(onset_frames[0], sr=sr) if len(onset_frames) > 0 else 0
 
-print(f"Number of channels: {num_channels}")
+        midi_onset_time = next((event['time'] for event in self.note_events if event['message'].type == 'note_on'), 0) if self.note_events else 0
+        self.offset = self.audio_onset_time - midi_onset_time
+        print(f"wav/midi offset: {self.offset:.3f}s")
 
-# Create the display surface
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption('MIDI Visualiser')
+        pygame.mixer.init()
+        pygame.mixer.music.load(self.conversion_file_path)
 
-# Clock for controlling frame rate
-clock = pygame.time.Clock()
+    def main_loop(self):
+        """Main loop for handling events, updating, and drawing."""
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN and self.game_state == "ready":
+                        self.game_state = "playing"
+                        pygame.mixer.music.play()
+                        self.start_time = pygame.time.get_ticks()
 
-active_notes = []
-next_event_index = 0
-start_time = None
-elapsed_time = 0
+            self.screen.fill((0, 0, 0))
 
-def main():
-    global start_time, elapsed_time, next_event_index, active_notes
+            if self.game_state == "ready":
+                text_surface = self.font.render('Ready, press ENTER to play', True, (255, 255, 255))
+                text_rect = text_surface.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+                self.screen.blit(text_surface, text_rect)
+            elif self.game_state == "playing":
+                elapsed_time = (pygame.time.get_ticks() - self.start_time) / 1000.0
 
-    # Start time in milliseconds
-    start_time = pygame.time.get_ticks()
+                while self.next_event_index < len(self.note_events) and \
+                        self.note_events[self.next_event_index]['time'] + self.offset <= elapsed_time:
+                    event = self.note_events[self.next_event_index]
+                    msg = event['message']
 
-    # Initialize pygame mixer and play the audio file
-    pygame.mixer.music.load(conversion_file_path)
-    pygame.mixer.music.play()
+                    if msg.type == 'program_change':
+                        print(f"Channel {msg.channel}, instrument: {GM_INSTRUMENTS[msg.program]}")
 
-    running = True
-    while running:
-        clock.tick(FRAMERATE)
-        elapsed_time = (pygame.time.get_ticks() - start_time) / 1000.0  # Convert to seconds
+                    if msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+                        for note in self.active_notes:
+                            if note.note == msg.note and note.active and note.channel == msg.channel:
+                                note.note_off(elapsed_time)
+                                break
+                    elif msg.type == 'note_on':
+                        self.active_notes.append(Note(msg, elapsed_time, self.num_channels))
+                    self.next_event_index += 1
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-                break
+                for note in self.active_notes[:]:
+                    note.update(elapsed_time)
+                    note.draw(self.screen)
+                    if note.finished:
+                        self.active_notes.remove(note)
 
-        # Clear the screen
-        screen.fill((0, 0, 0))
+            pygame.display.flip()
+            self.clock.tick(FRAMERATE)
+            print(f"active notes: {len(self.active_notes)}", end='  \r')
 
-        # Process MIDI events in sync with the playback
-        while next_event_index < len(note_events) and note_events[next_event_index]['time'] <= elapsed_time:
-            event = note_events[next_event_index]
-            msg = event['message']
-            if msg.type == 'program_change':
-                print(f"Channel {msg.channel}, instrument: {GM_INSTRUMENTS[msg.program]}")
+        pygame.quit()
+        sys.exit()
 
-            if msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
-                for note in active_notes:
-                    if note.note == msg.note and note.active and note.channel == msg.channel:
-                        note.note_off()
-                        break
-            elif msg.type == 'note_on':
-                active_notes.append(Note(msg))
-            next_event_index += 1
-
-        # Update and draw active notes
-        for note in active_notes[:]:
-            note.update()
-            note.draw(screen)
-            if note.finished:
-                active_notes.remove(note)
-
-        # Update the display
-        pygame.display.flip()
-
-        print(f"active notes: {len(active_notes)}", end='  \r')
-
-    pygame.quit()
 
 if __name__ == '__main__':
-    main()
+    visualizer = Visualizer()
+    visualizer.load_midi(MIDI_PATH)
+    visualizer.setup()
+    visualizer.main_loop()
