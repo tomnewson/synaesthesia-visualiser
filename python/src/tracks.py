@@ -10,7 +10,7 @@ WIDTH = 1920
 HEIGHT = 1080
 MIN_NOTE = 21   # A0 (first note on a standard 88-key piano)
 MAX_NOTE = 108  # C8 (last note on a standard 88-key piano)
-DEFAULT_FILE = "../midi/messiaen_diptyque_part_I_(winitzki).mid"
+DEFAULT_FILE = "../godot/midi/5th-Symphony-Part-1.mid"
 FRAMERATE = 60
 NOTE_TYPES = {'note_on', 'note_off', 'program_change'}
 
