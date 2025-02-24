@@ -1,13 +1,16 @@
+import math
+import threading
 import pygame
 import mido
 import librosa
 from chord_extractor.extractors import Chordino
-import threading
 
 # Constants (These can be overridden in subclasses)
 WIDTH = 1920
 HEIGHT = 1080
 FRAMERATE = 60
+MIN_NOTE = 21  # A0
+MAX_NOTE = 108  # C8
 NOTE_TYPES = {'note_on', 'note_off', 'program_change'}
 
 class BaseVisualizer:
@@ -140,17 +143,63 @@ class BaseVisualizer:
 class Note:
     """Represents a musical note in the visualization."""
 
-    def __init__(self, msg, elapsed_time):
+    def __init__(self, msg, elapsed_time, scale):
         self.note = msg.note
         self.start_time = elapsed_time
         self.end_time = None
         self.active = True
         self.finished = False
+        self.size = self.sigmoid_remap(msg.note, MIN_NOTE, MAX_NOTE, scale * 50, 10)
+
+    # --- Helper functions ---
+
+    def remap(self, value, left_min, left_max, right_min, right_max):
+        """Linearly maps a value from one range to another."""
+        left_span = left_max - left_min
+        right_span = right_max - right_min
+        value_scaled = float(value - left_min) / float(left_span)
+        return right_min + (value_scaled * right_span)
+
+    # Function to apply sigmoid remap with variable input and output ranges
+    def sigmoid_remap(self, value: float,
+        input_min: float, input_max: float,
+        output_min: float, output_max: float,
+        k: float = 1) -> float:
+        """Apply a sigmoid remap to a value with variable input and output ranges."""
+        normalized_value = (value - input_min) / (input_max - input_min)
+
+        centered = normalized_value - 0.5
+        sigmoid_value = 1.0 / (1.0 +   math.exp(-k * centered * 10.0))
+
+        return output_min + (sigmoid_value * (output_max - output_min))
+
+
+    def note_to_axis(self, note, max_val, note_size, ascending=True):
+        """Map MIDI note number to an axis position on the screen."""
+        if ascending:
+            return self.sigmoid_remap(note, MIN_NOTE, MAX_NOTE, 0, max_val - note_size)
+        return self.sigmoid_remap(note, MIN_NOTE, MAX_NOTE, max_val - note_size, 0)
+
+
+    def note_to_color(self, note):
+        """Map a MIDI note number to a color.
+
+        Converts an HSB (with hue in [0,360]) color to an RGB tuple.
+        """
+        hue = self.sigmoid_remap(note, MIN_NOTE, MAX_NOTE, 0, 360)
+        color = pygame.Color(0)
+        hue = self.shift(hue, 140, 360)
+        color.hsva = (hue, 100, 100, 100)  # Hue, Saturation, Value, Alpha
+        return color
 
     def note_off(self, elapsed_time):
         """Handles the note-off event."""
         self.end_time = elapsed_time
         self.active = False
+
+    def shift(self, val, shift, shift_max):
+        """Shifts the value by some degrees, wrapping around at max."""
+        return (val + shift) % shift_max
 
     def update(self, elapsed_time):
         """Update the note's position and size."""

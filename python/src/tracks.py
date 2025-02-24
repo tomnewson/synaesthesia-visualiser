@@ -80,42 +80,15 @@ GM_INSTRUMENTS = [
     "Telephone Ring", "Helicopter", "Applause", "Gunshot"
 ]
 
-
-# --- Helper functions ---
-
-def remap(value, left_min, left_max, right_min, right_max):
-    """Linearly maps a value from one range to another."""
-    left_span = left_max - left_min
-    right_span = right_max - right_min
-    value_scaled = float(value - left_min) / float(left_span)
-    return right_min + (value_scaled * right_span)
-
-
-def note_to_axis(note, max_val):
-    """Map MIDI note number to an axis position on the screen."""
-    return remap(note, MIN_NOTE, MAX_NOTE, 0, max_val)
-
-
-def note_to_color(note):
-    """Map a MIDI note number to a color.
-
-    Converts an HSB (with hue in [0,360]) color to an RGB tuple.
-    """
-    hue = remap(note, MIN_NOTE, MAX_NOTE, 0, 360)
-    color = pygame.Color(0)
-    color.hsva = (hue, 100, 100, 100)  # Hue, Saturation, Value, Alpha
-    return color
-
 class TracksNote(Note):
     """Represents a musical note in the tracks visualization."""
 
     def __init__(self, msg, elapsed_time, num_channels):
-        super().__init__(msg, elapsed_time)
+        super().__init__(msg, elapsed_time, scale=CIRCLE_SCALE)
         self.channel = msg.channel
-        self.x = WIDTH // 2 if num_channels <= 1 else remap(msg.channel or 0, 0, num_channels - 1, WIDTH * 0.1, WIDTH * 0.9)
-        self.y = remap(self.note, MIN_NOTE, MAX_NOTE, HEIGHT, 0)
-        self.size = remap(self.note, MIN_NOTE, MAX_NOTE, 50, 5) * CIRCLE_SCALE
-        self.color = note_to_color(self.note)
+        self.x = WIDTH // 2 if num_channels <= 1 else self.remap(msg.channel or 0, 0, num_channels - 1, WIDTH * 0.1, WIDTH * 0.9)
+        self.y = self.note_to_axis(self.note, HEIGHT, self.size, False)
+        self.color = self.note_to_color(self.note)
 
     def update(self, elapsed_time):
         """Update the note's position and size."""

@@ -19,7 +19,7 @@ Functions:
 """
 import math
 import pygame
-from visualiser import BaseVisualizer, Note # Import BaseVisualizer
+from visualiser import BaseVisualizer, Note
 
 # Constants
 WIDTH = 1920
@@ -29,43 +29,14 @@ MAX_NOTE = 108  # C8
 CIRCLE_SCALE = 10
 MIDI_PATH = "../godot/midi/la_campanella.mid"
 
-
-# --- Helper functions ---
-
-def remap(value, left_min, left_max, right_min, right_max):
-    """Linearly maps a value from one range to another."""
-    left_span = left_max - left_min
-    right_span = right_max - right_min
-    value_scaled = float(value - left_min) / float(left_span)
-    return right_min + (value_scaled * right_span)
-
-
-def note_to_axis(note, max_val):
-    """Map MIDI note number to an axis position on the screen."""
-    return remap(note, MIN_NOTE, MAX_NOTE, 0, max_val)
-
-
-def note_to_color(note):
-    """Map a MIDI note number to a color.
-
-    Converts an HSB (with hue in [0,360]) color to an RGB tuple.
-    """
-    hue = remap(note, MIN_NOTE, MAX_NOTE, 0, 360)
-    color = pygame.Color(0)
-    color.hsva = (hue, 100, 100, 100)  # Hue, Saturation, Value, Alpha
-    return color
-
-
 class SingleTrackNote(Note):
     """Represents a musical note in the single track visualization."""
 
     def __init__(self, msg, elapsed_time):
-        super().__init__(msg, elapsed_time)
-        self.velocity = msg.velocity
-        self.x = note_to_axis(self.note, WIDTH)
+        super().__init__(msg, elapsed_time, scale=CIRCLE_SCALE)
+        self.x = self.note_to_axis(self.note, WIDTH, self.size)
         self.y = HEIGHT / 2
-        self.size = remap(self.velocity, 0, 127, 10, 50 * CIRCLE_SCALE)
-        self.color = note_to_color(self.note)
+        self.color = self.note_to_color(self.note)
 
     def update(self, elapsed_time):
         """Update the note's position and size."""
