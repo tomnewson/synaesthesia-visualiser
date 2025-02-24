@@ -1,46 +1,26 @@
 """
-This module defines a TracksVisualizer class that extends BaseVisualizer to
-visualize MIDI data by representing each note as a circle, with the position
-and color of the circle determined by the note's pitch and channel.
+This module defines a TracksVisualizer class that visualizes MIDI data by separating notes by track.
 
-The module also includes helper functions for remapping values between ranges
-and converting MIDI note numbers to colors.
+It uses the pygame library for rendering and the mido library for MIDI parsing.
 
-Classes:
-    TracksNote: Represents a musical note with properties for position, size,
-        color, and channel, extending the base Note class.
-    TracksVisualizer: A visualizer that separates notes by track, extending
-        the BaseVisualizer class.
-
-Functions:
-    remap: Linearly maps a value from one range to another.
-    note_to_axis: Maps a MIDI note number to an axis position on the screen.
-    note_to_color: Maps a MIDI note number to a color (RGB tuple).
+The visualization displays notes as circles, with the x-position determined by the MIDI channel and the y-position determined by the note pitch.
 
 Constants:
-    WIDTH: The width of the screen.
-    HEIGHT: The height of the screen.
-    MIN_NOTE: The lowest MIDI note number (A0).
-    MAX_NOTE: The highest MIDI note number (C8).
-    DEFAULT_FILE: The default MIDI file path.
-    FRAMERATE: The frame rate of the visualization.
-    NOTE_TYPES: A set of MIDI message types to process.
-    CIRCLE_SCALE: A scaling factor for the size of the circles.
-    MIDI_PATH: The path to the MIDI file to visualize.
-    GM_INSTRUMENTS: A list of General MIDI instrument names.
+    WIDTH (int): The width of the screen.
+    HEIGHT (int): The height of the screen.
+    CIRCLE_SCALE (int): The scaling factor for the note circles.
+    MIDI_PATH (str): The path to the MIDI file.
+    GM_INSTRUMENTS (list): A list of General MIDI instrument names.
+
+Classes:
+    TracksNote (Note): Represents a musical note in the tracks visualization.
+    TracksVisualizer (BaseVisualizer): Visualizer that separates notes by track.
 """
-import math
-import pygame
 from visualiser import BaseVisualizer, Note # Import BaseVisualizer
 
 # Constants
 WIDTH = 1920
 HEIGHT = 1080
-MIN_NOTE = 21  # A0 (first note on a standard 88-key piano)
-MAX_NOTE = 108  # C8 (last note on a standard 88-key piano)
-DEFAULT_FILE = "../godot/midi/5th-Symphony-Part-1.mid"
-FRAMERATE = 60
-NOTE_TYPES = {'note_on', 'note_off', 'program_change'}
 CIRCLE_SCALE = 9
 MIDI_PATH = "../godot/midi/5th-Symphony-Part-1.mid"
 
@@ -88,36 +68,6 @@ class TracksNote(Note):
         self.channel = msg.channel
         self.x = WIDTH // 2 if num_channels <= 1 else self.remap(msg.channel or 0, 0, num_channels - 1, WIDTH * 0.1, WIDTH * 0.9)
         self.y = self.note_to_axis(self.note, HEIGHT, self.size, False)
-        self.color = self.note_to_color(self.note, self.velocity)
-
-    def update(self, elapsed_time):
-        """Update the note's position and size."""
-        if self.active:
-            self.size += math.log10(self.size) * 0.2
-        else:
-            time_since_end = elapsed_time - self.end_time
-            self.size = max(0, self.size - (time_since_end * CIRCLE_SCALE * 5))
-            self.color.a = max(0, 255 - int(time_since_end * 50))
-
-            if self.size <= 0 or self.color.a <= 0:
-                self.finished = True
-
-    def draw(self, surface):
-        """Draw the note on the surface."""
-        if self.size <= 0 or self.color.a <= 0:
-            return
-
-        shape_size = int(self.size * 2)
-        shape_surface = pygame.Surface((shape_size, shape_size), pygame.SRCALPHA)
-        pygame.draw.circle(
-            shape_surface,
-            self.color,
-            (shape_size // 2, shape_size // 2),
-            int(self.size),
-        )
-        surface.blit(shape_surface, (int(self.x - self.size), int(self.y - self.size)),
-                     special_flags=pygame.BLEND_ADD)
-
 
 class TracksVisualizer(BaseVisualizer):
     """Visualizer that separates notes by track."""

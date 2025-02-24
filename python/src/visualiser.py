@@ -1,3 +1,29 @@
+"""
+This module defines a base class for MIDI visualizers and a basic Note class.
+
+The BaseVisualizer class handles MIDI file loading, audio synchronization,
+and the main game loop for rendering visualizations. It uses pygame for
+graphics and audio playback, mido for MIDI parsing, librosa for audio
+analysis, and chord_extractor for MIDI to audio conversion.
+
+The Note class represents a single musical note with properties like
+position, size, color, and lifetime, providing methods for updating
+and drawing the note on the screen.
+
+Classes:
+    BaseVisualizer: Base class for MIDI visualizers.
+    Note: Represents a musical note in the visualization.
+
+Constants:
+    WIDTH: Width of the screen.
+    HEIGHT: Height of the screen.
+    FRAMERATE: Frames per second.
+    MIN_NOTE: Minimum MIDI note number (A0).
+    MAX_NOTE: Maximum MIDI note number (C8).
+    MIN_VELOCITY: Minimum MIDI velocity.
+    MAX_VELOCITY: Maximum MIDI velocity.
+    NOTE_TYPES: Set of MIDI message types to process.
+"""
 import math
 import threading
 import pygame
@@ -149,13 +175,16 @@ class Note:
         self.note = msg.note
         self.velocity = msg.velocity
         self.start_time = elapsed_time
+        self.scale = scale
         self.end_time = None
         self.active = True
-        self.finished = False
         self.size = self.sigmoid_remap(msg.note, MIN_NOTE, MAX_NOTE, scale * 50, 20)
+        self.color = self.note_to_color(self.note, self.velocity)
+
+        self.x = 0
+        self.y = 0
 
     # --- Helper functions ---
-
     def remap(self, value, left_min, left_max, right_min, right_max):
         """Linearly maps a value from one range to another."""
         left_span = left_max - left_min
@@ -207,8 +236,19 @@ class Note:
 
     def update(self, elapsed_time):
         """Update the note's position and size."""
-        raise NotImplementedError("Subclasses must implement update method")
+        if self.active:
+            self.size += math.log10(self.size) * 0.2
+        else:
+            time_since_end = elapsed_time - self.end_time
+            self.size = max(0, self.size - (time_since_end * self.scale * 5))
+            self.color.a = max(0, 255 - int(time_since_end * 50))
 
     def draw(self, surface):
         """Draw the note on the surface."""
-        raise NotImplementedError("Subclasses must implement draw method")
+        if self.size <= 0 or self.color.a <= 0:
+            return
+
+        shape_size = int(self.size * 2)
+        shape_surface = pygame.Surface((shape_size, shape_size), pygame.SRCALPHA)
+        pygame.draw.circle(shape_surface, self.color, (shape_size // 2, shape_size // 2), int(self.size))
+        surface.blit(shape_surface, (int(self.x - self.size), int(self.y - self.size)), special_flags=pygame.BLEND_ADD)
