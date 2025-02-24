@@ -4,18 +4,20 @@ This module defines a TracksVisualizer class that visualizes MIDI data by separa
 It uses the pygame library for rendering and the mido library for MIDI parsing.
 
 The visualization displays notes as circles, with the x-position determined by the MIDI channel and the y-position determined by the note pitch.
+The MIDI file path can be specified as a command-line argument; otherwise, the default MIDI_PATH is used.
 
 Constants:
     WIDTH (int): The width of the screen.
     HEIGHT (int): The height of the screen.
     CIRCLE_SCALE (int): The scaling factor for the note circles.
-    MIDI_PATH (str): The path to the MIDI file.
+    MIDI_PATH (str): The default path to the MIDI file.
     GM_INSTRUMENTS (list): A list of General MIDI instrument names.
 
 Classes:
     TracksNote (Note): Represents a musical note in the tracks visualization.
     TracksVisualizer (BaseVisualizer): Visualizer that separates notes by track.
 """
+import argparse
 from visualiser import BaseVisualizer, Note # Import BaseVisualizer
 
 # Constants
@@ -76,7 +78,11 @@ class TracksVisualizer(BaseVisualizer):
         return TracksNote(msg, elapsed_time, self.num_channels)
 
 if __name__ == '__main__':
-    visualizer = TracksVisualizer(MIDI_PATH)
+    parser = argparse.ArgumentParser(description="MIDI Visualizer with Track Separation")
+    parser.add_argument('--midi_path', type=str, default=MIDI_PATH, help='Path to the MIDI file')
+    args = parser.parse_args()
+
+    visualizer = TracksVisualizer(args.midi_path)
     visualizer.load_midi()
     visualizer.setup()
     visualizer.main_loop()
