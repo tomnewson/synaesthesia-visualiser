@@ -156,7 +156,7 @@ class BaseVisualizer:
                 for note in self.active_notes[:]:
                     note.update(elapsed_time)
                     note.draw(self.screen)
-                    if note.finished:
+                    if note.invisible:
                         self.active_notes.remove(note)
 
             pygame.display.flip()
