@@ -36,7 +36,7 @@ class SingleTrackNote(Note):
         super().__init__(msg, elapsed_time, scale=CIRCLE_SCALE)
         self.x = self.note_to_axis(self.note, WIDTH, self.size)
         self.y = HEIGHT / 2
-        self.color = self.note_to_color(self.note)
+        self.color = self.note_to_color(self.note, self.velocity)
 
     def update(self, elapsed_time):
         """Update the note's position and size."""

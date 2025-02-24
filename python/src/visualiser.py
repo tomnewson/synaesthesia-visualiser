@@ -11,6 +11,8 @@ HEIGHT = 1080
 FRAMERATE = 60
 MIN_NOTE = 21  # A0
 MAX_NOTE = 108  # C8
+MIN_VELOCITY = 0
+MAX_VELOCITY = 127
 NOTE_TYPES = {'note_on', 'note_off', 'program_change'}
 
 class BaseVisualizer:
@@ -145,11 +147,12 @@ class Note:
 
     def __init__(self, msg, elapsed_time, scale):
         self.note = msg.note
+        self.velocity = msg.velocity
         self.start_time = elapsed_time
         self.end_time = None
         self.active = True
         self.finished = False
-        self.size = self.sigmoid_remap(msg.note, MIN_NOTE, MAX_NOTE, scale * 50, 10)
+        self.size = self.sigmoid_remap(msg.note, MIN_NOTE, MAX_NOTE, scale * 50, 20)
 
     # --- Helper functions ---
 
@@ -181,15 +184,16 @@ class Note:
         return self.sigmoid_remap(note, MIN_NOTE, MAX_NOTE, max_val - note_size, 0)
 
 
-    def note_to_color(self, note):
-        """Map a MIDI note number to a color.
+    def note_to_color(self, note, velocity):
+        """Map a MIDI note number to a pastel color.
 
         Converts an HSB (with hue in [0,360]) color to an RGB tuple.
         """
         hue = self.sigmoid_remap(note, MIN_NOTE, MAX_NOTE, 0, 360)
         color = pygame.Color(0)
         hue = self.shift(hue, 140, 360)
-        color.hsva = (hue, 100, 100, 100)  # Hue, Saturation, Value, Alpha
+        sat = self.sigmoid_remap(velocity, MIN_VELOCITY, MAX_VELOCITY, 40, 80)
+        color.hsva = (hue, sat, 100, 100)  # Hue, Saturation, Value, Alpha
         return color
 
     def note_off(self, elapsed_time):

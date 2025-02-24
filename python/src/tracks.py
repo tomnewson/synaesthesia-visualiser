@@ -41,7 +41,7 @@ MAX_NOTE = 108  # C8 (last note on a standard 88-key piano)
 DEFAULT_FILE = "../godot/midi/5th-Symphony-Part-1.mid"
 FRAMERATE = 60
 NOTE_TYPES = {'note_on', 'note_off', 'program_change'}
-CIRCLE_SCALE = 10
+CIRCLE_SCALE = 9
 MIDI_PATH = "../godot/midi/5th-Symphony-Part-1.mid"
 
 GM_INSTRUMENTS = [
@@ -88,7 +88,7 @@ class TracksNote(Note):
         self.channel = msg.channel
         self.x = WIDTH // 2 if num_channels <= 1 else self.remap(msg.channel or 0, 0, num_channels - 1, WIDTH * 0.1, WIDTH * 0.9)
         self.y = self.note_to_axis(self.note, HEIGHT, self.size, False)
-        self.color = self.note_to_color(self.note)
+        self.color = self.note_to_color(self.note, self.velocity)
 
     def update(self, elapsed_time):
         """Update the note's position and size."""
