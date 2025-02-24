@@ -178,6 +178,7 @@ class Note:
         self.scale = scale
         self.end_time = None
         self.active = True
+        self.invisible = False
         self.size = self.sigmoid_remap(msg.note, MIN_NOTE, MAX_NOTE, scale * 50, 20)
         self.color = self.note_to_color(self.note, self.velocity)
 
@@ -242,6 +243,9 @@ class Note:
             time_since_end = elapsed_time - self.end_time
             self.size = max(0, self.size - (time_since_end * self.scale * 5))
             self.color.a = max(0, 255 - int(time_since_end * 50))
+
+        if self.size <= 0 or self.color.a <= 0:
+            self.invisible = True
 
     def draw(self, surface):
         """Draw the note on the surface."""
