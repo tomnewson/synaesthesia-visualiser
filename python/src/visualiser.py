@@ -255,4 +255,8 @@ class Note:
         shape_size = int(self.size * 2)
         shape_surface = pygame.Surface((shape_size, shape_size), pygame.SRCALPHA)
         pygame.draw.circle(shape_surface, self.color, (shape_size // 2, shape_size // 2), int(self.size))
-        surface.blit(shape_surface, (int(self.x - self.size), int(self.y - self.size)), special_flags=pygame.BLEND_ADD)
+        surface.blit(
+            shape_surface,
+            (int(self.x - self.size), (self.y - self.size)),
+            special_flags=pygame.BLEND_MAX,
+        )
