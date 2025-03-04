@@ -90,7 +90,7 @@ material = ExtResource("5_3frte")
 flip_faces = true
 size = Vector2(2, 2)
 
-[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_74rlw"]
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_s8oof"]
 friction = 0.0
 bounce = 3.0
 
@@ -188,7 +188,7 @@ script = ExtResource("6_mtn6x")
 [node name="Tesseract" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.852)
 visible = false
-physics_material_override = SubResource("PhysicsMaterial_74rlw")
+physics_material_override = SubResource("PhysicsMaterial_s8oof")
 gravity_scale = 0.2
 script = ExtResource("10_6t1d7")
 
@@ -229,6 +229,7 @@ visible = false
 
 [node name="CollapseSphere" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.49)
+visible = false
 layers = 3
 mesh = SubResource("ArrayMesh_075rg")
 
