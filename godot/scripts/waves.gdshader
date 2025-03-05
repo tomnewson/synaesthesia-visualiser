@@ -8,7 +8,7 @@ uniform vec2 wave_direction = vec2(0.0, 1.0); // Wave propagation direction
 uniform float alpha = 0.0;
 
 uniform vec4 add_color : source_color = vec4(0.0);
-//render_mode blend_add;
+render_mode depth_draw_always, diffuse_burley;
 
 void vertex() {
     // Calculate wave displacement

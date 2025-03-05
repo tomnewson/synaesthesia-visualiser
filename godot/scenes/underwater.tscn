@@ -1,27 +1,35 @@
-[gd_scene load_steps=6 format=3 uid="uid://pry5smqa7t2m"]
+[gd_scene load_steps=8 format=3 uid="uid://pry5smqa7t2m"]
 
 [ext_resource type="Script" path="res://scripts/underwater.gd" id="1_7lsbl"]
 [ext_resource type="PackedScene" uid="uid://8i8dhs3lkmxv" path="res://scenes/tadpole.tscn" id="1_ng6hd"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="2_ksfev"]
 [ext_resource type="PackedScene" uid="uid://cy5368pba2n3j" path="res://scenes/midi_receiver.tscn" id="4_ds6g4"]
+[ext_resource type="Shader" path="res://scripts/underwater.gdshader" id="5_wjbxi"]
 
 [sub_resource type="Environment" id="Environment_jxyuv"]
 background_mode = 1
-background_color = Color(0.378111, 0.563658, 0.821266, 1)
+background_color = Color(0.178985, 0.325494, 0.52693, 1)
 ambient_light_color = Color(0.437068, 0.682355, 0.920963, 1)
-ambient_light_energy = 4.96
-glow_enabled = true
-fog_enabled = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_oqio5"]
+shader = ExtResource("5_wjbxi")
+shader_parameter/wave_strength = 0.01
+shader_parameter/wave_frequency = 20.0
+shader_parameter/tint_strength = 0.2
+shader_parameter/tint_color = Color(0, 0.4, 0.7, 1)
 
 [node name="Underwater" type="Node3D"]
 script = ExtResource("1_7lsbl")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.54654)
+projection = 1
 current = true
+size = 5.0
 
 [node name="TestTadpole" parent="." instance=ExtResource("1_ng6hd")]
 transform = Transform3D(-1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0, 0, -2.335)
+visible = false
 script = null
 
 [node name="ArlezMidiPlayer" type="Node" parent="."]
@@ -33,6 +41,25 @@ soundfont = "res://data/Aspirin-Stereo.sf2"
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_jxyuv")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.95585)
+
+[node name="SpotLight3D" type="SpotLight3D" parent="."]
+transform = Transform3D(0.538216, -0.237303, 0.808709, 0.141589, 0.971364, 0.190801, -0.830828, 0.0118119, 0.556403, 4.60258, 0.82743, 0.833663)
+light_energy = 2.557
+
+[node name="UnderwaterOverlay" type="CanvasLayer" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="UnderwaterOverlay"]
+material = SubResource("ShaderMaterial_oqio5")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Bubbles" type="CPUParticles2D" parent="UnderwaterOverlay"]
 
 [connection signal="midi_event" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_arlez_midi_player_midi_event"]
 [connection signal="note_off" from="MidiReceiver" to="." method="_on_midi_receiver_note_off"]

@@ -17,7 +17,7 @@ shader_parameter/emission_energy = 1.0
 shader_parameter/light_intensity = 2.0
 shader_parameter/edge_softness = 0.5
 shader_parameter/core_size = 0.69
-shader_parameter/transparency = 1.0
+shader_parameter/transparency = 0.9
 shader_parameter/ring_count = 20.0
 shader_parameter/ring_thickness = 0.05
 shader_parameter/ring_intensity = 0.02
@@ -35,11 +35,11 @@ shader_parameter/uv2_offset = Vector3(0, 0, 0)
 
 [sub_resource type="SphereMesh" id="SphereMesh_1y62r"]
 material = SubResource("ShaderMaterial_bt2x3")
-rings = 86
+radial_segments = 128
+rings = 128
 
 [node name="Tadpole" type="MeshInstance3D"]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, -1.495)
+transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, -1.495)
 mesh = SubResource("SphereMesh_1y62r")
 script = ExtResource("2_t2brw")
 speed = 3.0
-shrink_rate = 0.2

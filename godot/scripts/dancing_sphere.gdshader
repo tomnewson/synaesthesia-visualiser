@@ -1,7 +1,7 @@
 // NOTE: Shader automatically converted from Godot Engine 4.3.stable's StandardMaterial3D.
 
 shader_type spatial;
-render_mode depth_draw_always, cull_back, diffuse_burley, specular_schlick_ggx, unshaded;
+render_mode depth_draw_always, diffuse_burley, blend_mix;
 
 uniform vec4 albedo : source_color;
 uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
@@ -102,7 +102,7 @@ void vertex() {
 	VERTEX.y += wave_value * height_factor * position_wave_scale;
 
 	// Also apply a smaller complementary wave to the Z axis for a more organic feel
-	VERTEX.z += wave_value * height_factor * 0.3 * position_wave_scale;
+	VERTEX.z += wave_value * height_factor * 1.3 * position_wave_scale;
 }
 
 void fragment() {
@@ -130,19 +130,13 @@ void fragment() {
 	ALBEDO = albedo.rgb * albedo_tex.rgb * ring_pattern;
 
 	// Enhanced transparency - combine the edge falloff with the overall transparency
-	float alpha_value = mix(transparency, 0.0, falloff * 0.8);
+	float alpha_value = mix(transparency, 0.0, falloff);
 	ALPHA = alpha_value * ring_pattern;
 
 	// Metallic and roughness properties
-	float metallic_tex = dot(texture(texture_metallic, base_uv), metallic_texture_channel);
-	METALLIC = metallic_tex * metallic * 0.5; // Reduce metallic for more light-like appearance
-	SPECULAR = specular * 1.5; // Enhance specular for light effect
 
-	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
-	float roughness_tex = dot(texture(texture_roughness, base_uv), roughness_texture_channel);
-	ROUGHNESS = roughness_tex * roughness * 0.7; // Lower roughness for more light-like appearance
+	METALLIC = 0.0; // Reduce metallic for more light-like appearance
+	SPECULAR = 1.5; // Enhance specular for light effect
+	ROUGHNESS = 2.0; // Lower roughness for more light-like appearance
 
-	// Enhanced emission for light projection effect
-	vec3 emission_tex = texture(texture_emission, base_uv).rgb;
-	EMISSION = (emission.rgb + emission_tex) * emission_energy * light_factor * light_intensity * ring_pattern;
 }

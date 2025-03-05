@@ -11,9 +11,12 @@ extends MeshInstance3D
 @export var amplitude: float = 1.0
 
 @export var rotation_factor: float = 1.0
+# Debug options
+@export var show_direction_indicator: bool = true
+
 # Current scale factor
 var current_scale: float
-
+var direction_indicator: MeshInstance3D
 var isDying: bool
 
 # Called when the node enters the scene tree for the first time.
@@ -23,21 +26,54 @@ func _ready() -> void:
 	isDying = false
 	position.y = y_offset
 
+	# Create direction indicator for debugging
+	if show_direction_indicator:
+		create_direction_indicator()
+
+# Create a visual indicator showing movement direction
+func create_direction_indicator() -> void:
+	direction_indicator = MeshInstance3D.new()
+	direction_indicator.name = "DirectionIndicator"
+
+	direction_indicator.mesh = SphereMesh.new()
+	direction_indicator.mesh.radius = 0.25
+	direction_indicator.mesh.height = 0.5
+
+	# Position it to point in direction of movement
+	direction_indicator.transform.origin = Vector3(-2, 0, 0)
+
+	# Make it red for visibility
+	var material = StandardMaterial3D.new()
+	material.albedo_color = Color(1, 0, 0)
+	direction_indicator.material_override = material
+
+	add_child(direction_indicator)
+
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	# Move the tadpole to the right
 	position.x += speed * delta
 	position.y = y_offset + sin(position.x * 2) * 0.1 * amplitude
 
-	# rotate_x(speed * rotation_factor * delta)
+	# Calculate movement direction
+	var direction = Vector3(speed, 0.2 * amplitude * cos(position.x * 2), 0)
+	direction = direction.normalized()
+
+	# Calculate rotation angle to face movement direction
+	var angle = atan2(direction.y, direction.x)
+
+	# Apply rotation to face the direction of movement
+	rotation.z = -angle
 
 	# Shrink the tadpole
 	if isDying:
-		current_scale -= shrink_rate * delta
-		if current_scale <= 0:
+		var current_transparency = self.mesh.material.get_shader_parameter("transparency")
+		var new_transparency = current_transparency - 0.2 * delta
+		if new_transparency < 0:
 			# Remove the tadpole when it's too small
 			queue_free()
 			return
+		self.mesh.material.set_shader_parameter("transparency", new_transparency)
 
 	# Apply the new scale
 	scale = Vector3(current_scale, current_scale, current_scale)
@@ -45,8 +81,6 @@ func _process(delta: float) -> void:
 	# Check if tadpole is outside camera view
 	var camera = get_viewport().get_camera_3d()
 	if camera and is_outside_camera_view(camera):
-		# Teleport back to left side
-		# teleport_to_left_side(camera)
 		queue_free()
 
 func kill() -> void:

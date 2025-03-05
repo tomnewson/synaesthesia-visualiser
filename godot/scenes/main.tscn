@@ -90,7 +90,7 @@ material = ExtResource("5_3frte")
 flip_faces = true
 size = Vector2(2, 2)
 
-[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_s8oof"]
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_o65u6"]
 friction = 0.0
 bounce = 3.0
 
@@ -142,12 +142,12 @@ rings = 64
 script = ExtResource("1_3kk6h")
 
 [node name="SpotLight3D" type="SpotLight3D" parent="."]
-transform = Transform3D(0.93199, 0.357975, -0.0569998, -0.303022, 0.855709, 0.419452, 0.198929, -0.373653, 0.905986, -1.14598, 0.710281, 1.28442)
+transform = Transform3D(0.93199, 0.357975, -0.0569998, -0.303022, 0.855709, 0.419452, 0.198929, -0.373653, 0.905986, -0.106, 2.475, 1.284)
 layers = 3
 light_energy = 8.732
 
 [node name="SpotLight3D2" type="SpotLight3D" parent="."]
-transform = Transform3D(0.92958, 0.32905, 0.166155, -0.333116, 0.942879, -0.0035875, -0.157844, -0.0520139, 0.986093, 1.02373, 0.710281, 1.28442)
+transform = Transform3D(0.92958, 0.32905, 0.166155, -0.333116, 0.942879, -0.0035875, -0.157844, -0.0520139, 0.986093, 1.024, 0.02, 1.284)
 layers = 3
 light_energy = 2.378
 
@@ -188,11 +188,12 @@ script = ExtResource("6_mtn6x")
 [node name="Tesseract" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.852)
 visible = false
-physics_material_override = SubResource("PhysicsMaterial_s8oof")
+physics_material_override = SubResource("PhysicsMaterial_o65u6")
 gravity_scale = 0.2
 script = ExtResource("10_6t1d7")
 
 [node name="Waves" parent="." instance=ExtResource("7_le7pq")]
+transform = Transform3D(1, 0, 0, 0, 0.705871, -0.70834, 0, 0.70834, 0.705871, 0, -0.24026, -1.1051)
 
 [node name="WavesViewport" type="SubViewport" parent="."]
 transparent_bg = true
