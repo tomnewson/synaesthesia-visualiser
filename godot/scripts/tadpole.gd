@@ -18,6 +18,7 @@ extends MeshInstance3D
 var current_scale: float
 var direction_indicator: MeshInstance3D
 var isDying: bool
+var dying_speed: float = 0.2
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -68,7 +69,7 @@ func _process(delta: float) -> void:
 	# Shrink the tadpole
 	if isDying:
 		var current_transparency = self.mesh.material.get_shader_parameter("transparency")
-		var new_transparency = current_transparency - 0.2 * delta
+		var new_transparency = current_transparency - dying_speed * delta
 		if new_transparency < 0:
 			# Remove the tadpole when it's too small
 			queue_free()
@@ -79,12 +80,12 @@ func _process(delta: float) -> void:
 	scale = Vector3(current_scale, current_scale, current_scale)
 
 	# Check if tadpole is outside camera view
-	var camera = get_viewport().get_camera_3d()
-	if camera and is_outside_camera_view(camera):
-		queue_free()
+	if (self.position.x >= 3.0 and self.position.y > -1.5 or is_outside_camera_view(get_viewport().get_camera_3d())):
+		kill(1.0)
 
-func kill() -> void:
+func kill(kill_speed: float = dying_speed) -> void:
 	isDying = true
+	dying_speed = kill_speed
 
 # Check if tadpole is outside the camera's view on the right
 func is_outside_camera_view(camera: Camera3D) -> bool:

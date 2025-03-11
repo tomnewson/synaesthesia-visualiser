@@ -15,13 +15,16 @@ const MAX_VELOCITIES = {
 const INSTRUMENT_MAP = {
 	"waves": Globals.InstrumentCategory.PIPE,
 	"strings": Globals.InstrumentCategory.GUITAR,
+	"light": Globals.InstrumentCategory.PERCUSSIVE,
 }
 
-const BASE_WAVES_INTENSITY = 0.05
+const BASE_WAVES_INTENSITY = 0.1
+const BASE_LIGHT_POSITION = Vector3(0, 3.5, 1)
 
 const BG_TRANSITION_SPEED = 0.5
 const WAVES_TRANSITION_SPEED = 2.0
 const STRINGS_TRANSITION_SPEED = 2.0
+const LIGHT_TRANSITION_SPEED = 2.3
 
 const MAX_PITCH = 127.0
 
@@ -35,6 +38,8 @@ var target_waves_alpha: float
 
 var target_strings_width: float
 var target_strings_color: Color
+
+var target_light_position: Vector3
 
 enum Note { ID, TRACK, PITCH, VELOCITY, INSTRUMENT }
 enum Instrument { PITCH, VELOCITY, COUNT }
@@ -63,6 +68,10 @@ func reset_strings():
 	target_strings_width = 0.0
 	target_strings_color = Color.TRANSPARENT
 
+func reset_light():
+	$SpotLight3D.transform.origin = BASE_LIGHT_POSITION
+	target_light_position = $SpotLight3D.transform.origin
+
 func _ready() -> void:
 	midi_player.play()
 	no_notes_played = true
@@ -72,12 +81,14 @@ func _ready() -> void:
 
 	reset_waves()
 	reset_strings()
+	reset_light()
 
 func _process(delta):
 	# TODO: FIX lerp to properly transition according to delta
 	update_background(delta)
 	update_waves_mat(delta)
 	update_strings_mat(delta)
+	update_light(delta)
 
 func lerp_shader(mat: ShaderMaterial, param: String, target, speed: float, isColor: int = false):
 	var current = mat.get_shader_parameter(param)
@@ -85,6 +96,9 @@ func lerp_shader(mat: ShaderMaterial, param: String, target, speed: float, isCol
 		param,
 		lerp_between_colors(current, target, speed) if isColor else lerp(current, target, speed)
 	)
+
+func update_light(delta):
+	$SpotLight3D.transform.origin = lerp($SpotLight3D.transform.origin, target_light_position, LIGHT_TRANSITION_SPEED * delta)
 
 func update_background(delta):
 	var current_bg_colour = environment.background_color
@@ -153,6 +167,7 @@ func update_active_notes():
 		#target_bg_color = Color.BLACK
 		set_waves_targets(0,0,0)
 		set_strings_targets(0,0,0)
+		set_light_targets(0,0,0)
 		return
 
 	var instrument_stats = {"total": [0,0]}
@@ -194,13 +209,39 @@ func update_active_notes():
 		strings_instrument[Instrument.COUNT],
 	)
 
+	# light
+	var light_instrument = instrument_stats[INSTRUMENT_MAP["light"]]
+	set_light_targets(
+		light_instrument[Instrument.PITCH],
+		light_instrument[Instrument.VELOCITY],
+		light_instrument[Instrument.COUNT],
+	)
+
+func set_light_targets(sum_pitch, velocity, count):
+	if (count == 0):
+		target_light_position = BASE_LIGHT_POSITION
+		return
+
+	var max_velocity = MAX_VELOCITIES[INSTRUMENT_MAP["light"]]
+	var target_y = remap(velocity, 0, max_velocity, BASE_LIGHT_POSITION.y, 1.5)
+	var target_x = remap(sum_pitch / count, 0, MAX_PITCH, -2.5, 2.5)
+	target_light_position = Vector3(target_x, target_y, 1)
+
 func set_waves_targets(sum_pitch, velocity, count):
 	var max_velocity = MAX_VELOCITIES[INSTRUMENT_MAP["waves"]]
 	target_waves_intensity = BASE_WAVES_INTENSITY + (clamp(velocity, 0, max_velocity) / max_velocity) / 3.0
-	target_waves_alpha = clamp(velocity, 0.0, max_velocity) / max_velocity
+
+	var sat = remap(velocity, 0, max_velocity, 0.5, 0.8)
+	var val = remap(velocity, 0, max_velocity, 0.6, 0.8)
+	var hue
 	if count:
 		var avg_waves_pitch = sum_pitch / count
-		target_waves_color = color_from_notes(avg_waves_pitch, velocity, max_velocity)
+		hue = avg_waves_pitch / MAX_PITCH
+	else:
+		hue = target_waves_color.h
+
+	target_waves_color = Color.from_hsv(hue, sat, val)
+	target_waves_alpha = 1.0
 
 func set_strings_targets(sum_pitch, sum_velocity, count):
 	var max_velocity = MAX_VELOCITIES[INSTRUMENT_MAP["strings"]]
@@ -212,7 +253,7 @@ func set_strings_targets(sum_pitch, sum_velocity, count):
 	target_strings_color.a = sum_velocity / max_velocity
 
 func _on_midi_receiver_note_on(note_id, note, velocity, track, instrument) -> void:
-	var sigmoided_note = sigmoid(note, 0.3, 55) * MAX_PITCH
+	var sigmoided_note = sigmoid(note, 0.5, 55) * MAX_PITCH
 	active_notes.append([note_id, track, sigmoided_note, velocity, instrument])
 	update_active_notes()
 

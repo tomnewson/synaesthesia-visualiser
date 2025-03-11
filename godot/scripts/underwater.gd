@@ -78,7 +78,7 @@ func _on_midi_receiver_note_on(note_id, note, velocity, track, instrument) -> vo
 	tadpoleMesh.material.set_shader_parameter("albedo", color_from_pitch(note))
 	tadpoleMesh.material.set_shader_parameter("tail_length", remap(note, 0, MAX_PITCH, 6.5, 11.0))
 	tadpoleMesh.material.set_shader_parameter("wave_amplitude", remap(note, 0, MAX_PITCH, 0.03, 0.08))
-	tadpoleMesh.material.set_shader_parameter("wave_frequency", remap(note, 0, MAX_PITCH, 4.0, 7.0))
+	tadpoleMesh.material.set_shader_parameter("wave_frequency", remap(note, 0, MAX_PITCH, 4.0, 9.0))
 	tadpole.mesh = tadpoleMesh
 	add_child(tadpole)
 
@@ -87,5 +87,8 @@ func _on_midi_receiver_note_on(note_id, note, velocity, track, instrument) -> vo
 func _on_midi_receiver_note_off(note_id, track) -> void:
 	# Send kill signal to the corresponding tadpole
 	if tadpoles_by_note_id.has(note_id):
-		tadpoles_by_note_id[note_id].kill()
+		var tadpole = tadpoles_by_note_id[note_id]
+		if is_instance_valid(tadpole):
+			# kill tadpole if not already removed from memory
+			tadpoles_by_note_id[note_id].kill()
 		tadpoles_by_note_id.erase(note_id) # Remove from dictionary

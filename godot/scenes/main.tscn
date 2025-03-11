@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://bts85jkpxcyyl"]
+[gd_scene load_steps=14 format=3 uid="uid://bts85jkpxcyyl"]
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
@@ -7,9 +7,6 @@
 [ext_resource type="Script" path="res://scripts/screen_reader.gd" id="6_mtn6x"]
 [ext_resource type="PackedScene" uid="uid://hstcclti5c4p" path="res://scenes/waves.tscn" id="7_le7pq"]
 [ext_resource type="Shader" path="res://scripts/strings.gdshader" id="8_yp5tl"]
-[ext_resource type="PackedScene" uid="uid://dnm4sj83mwp0i" path="res://scenes/collapsing_cube.tscn" id="9_1mylh"]
-[ext_resource type="Shader" path="res://scripts/tadpole.gdshader" id="10_06lji"]
-[ext_resource type="Script" path="res://scripts/tesseract.gd" id="10_6t1d7"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_8urim"]
 sky_top_color = Color(0.828516, 0.524664, 7.70092e-07, 1)
@@ -24,75 +21,15 @@ sky_material = SubResource("ProceduralSkyMaterial_8urim")
 background_mode = 1
 background_color = Color(0.489533, 0.392, 0.7, 1)
 sky = SubResource("Sky_pbdgm")
-
-[sub_resource type="Shader" id="Shader_x225m"]
-code = "// NOTE: Shader automatically converted from Godot Engine 4.3.stable's StandardMaterial3D.
-
-shader_type spatial;
-render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
-
-uniform vec4 albedo : source_color;
-uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
-uniform float point_size : hint_range(0.1, 128.0, 0.1);
-
-uniform float roughness : hint_range(0.0, 1.0);
-uniform sampler2D texture_metallic : hint_default_white, filter_linear_mipmap, repeat_enable;
-uniform vec4 metallic_texture_channel;
-uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, repeat_enable;
-
-uniform float specular : hint_range(0.0, 1.0, 0.01);
-uniform float metallic : hint_range(0.0, 1.0, 0.01);
-
-uniform vec3 uv1_scale;
-uniform vec3 uv1_offset;
-uniform vec3 uv2_scale;
-uniform vec3 uv2_offset;
-
-void vertex() {
-	UV = UV * uv1_scale.xy + uv1_offset.xy;
-}
-
-void fragment() {
-	vec2 base_uv = UV;
-
-	vec4 albedo_tex = texture(texture_albedo, base_uv);
-	ALBEDO = albedo.rgb * albedo_tex.rgb;
-
-	float metallic_tex = dot(texture(texture_metallic, base_uv), metallic_texture_channel);
-	METALLIC = metallic_tex * metallic;
-	SPECULAR = specular;
-
-	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
-	float roughness_tex = dot(texture(texture_roughness, base_uv), roughness_texture_channel);
-	ROUGHNESS = roughness_tex * roughness;
-}
-"
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_r6dxc"]
-render_priority = 0
-shader = SubResource("Shader_x225m")
-shader_parameter/albedo = Color(1, 1, 1, 1)
-shader_parameter/point_size = 1.0
-shader_parameter/roughness = 0.5
-shader_parameter/metallic_texture_channel = null
-shader_parameter/specular = 0.5
-shader_parameter/metallic = 0.35
-shader_parameter/uv1_scale = Vector3(1, 1, 1)
-shader_parameter/uv1_offset = Vector3(0, 0, 0)
-shader_parameter/uv2_scale = Vector3(1, 1, 1)
-shader_parameter/uv2_offset = Vector3(0, 0, 0)
-
-[sub_resource type="SphereMesh" id="SphereMesh_biq5k"]
-material = SubResource("ShaderMaterial_r6dxc")
+fog_light_energy = 0.0
+fog_sun_scatter = 0.58
+fog_density = 0.7395
+volumetric_fog_density = 0.2265
 
 [sub_resource type="QuadMesh" id="QuadMesh_74lex"]
 material = ExtResource("5_3frte")
 flip_faces = true
 size = Vector2(2, 2)
-
-[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_helbp"]
-friction = 0.0
-bounce = 3.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_a7wmh"]
 render_priority = 0
@@ -109,40 +46,11 @@ subdivide_width = 85
 subdivide_depth = 120
 orientation = 2
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_fsg28"]
-render_priority = 0
-shader = ExtResource("8_yp5tl")
-shader_parameter/overallSpeed = 0.2
-shader_parameter/width = 0.5
-shader_parameter/lineColor = Color(0.25, 0.5, 1, 1)
-shader_parameter/scale = 5.0
-
-[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_j8qdt"]
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_075rg"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_dvo4d"]
-render_priority = 0
-shader = ExtResource("10_06lji")
-shader_parameter/time_speed = 2.0
-shader_parameter/minFrequency = 2.0
-shader_parameter/maxFrequency = 8.0
-shader_parameter/minAmplitude = 0.1
-shader_parameter/maxAmplitude = 0.3
-shader_parameter/color = Color(0.76, 0.430667, 0.38, 0.796078)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_xjv50"]
-material = SubResource("ShaderMaterial_dvo4d")
-top_radius = 1.0
-bottom_radius = 1.0
-height = 4.0
-rings = 64
-
 [node name="Main" type="Node3D"]
 script = ExtResource("1_3kk6h")
 
 [node name="SpotLight3D" type="SpotLight3D" parent="."]
-transform = Transform3D(0.93199, 0.357975, -0.0569998, -0.303022, 0.855709, 0.419452, 0.198929, -0.373653, 0.905986, -0.106, 2.475, 1.284)
+transform = Transform3D(0.93199, 0.357975, -0.0569998, -0.303022, 0.855709, 0.419452, 0.198929, -0.373653, 0.905986, 0, 2.445, 1)
 layers = 3
 light_energy = 8.732
 
@@ -150,12 +58,6 @@ light_energy = 8.732
 transform = Transform3D(0.92958, 0.32905, 0.166155, -0.333116, 0.942879, -0.0035875, -0.157844, -0.0520139, 0.986093, 1.024, 0.02, 1.284)
 layers = 3
 light_energy = 2.378
-
-[node name="Sun" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.550254, 0.614948)
-visible = false
-layers = 3
-light_energy = 4.062
 
 [node name="ArlezMidiPlayer" type="Node" parent="."]
 script = ExtResource("3_1tp21")
@@ -173,24 +75,12 @@ current = true
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_xo5ig")
 
-[node name="TestSphere" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.429)
-visible = false
-mesh = SubResource("SphereMesh_biq5k")
-
 [node name="ScreenReader" type="MeshInstance3D" parent="."]
 visible = false
 extra_cull_margin = 16384.0
 mesh = SubResource("QuadMesh_74lex")
 skeleton = NodePath("")
 script = ExtResource("6_mtn6x")
-
-[node name="Tesseract" type="RigidBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.852)
-visible = false
-physics_material_override = SubResource("PhysicsMaterial_helbp")
-gravity_scale = 0.2
-script = ExtResource("10_6t1d7")
 
 [node name="Waves" parent="." instance=ExtResource("7_le7pq")]
 transform = Transform3D(1, 0, 0, 0, 0.705871, -0.70834, 0, 0.70834, 0.705871, 0, -0.24026, -1.1051)
@@ -207,38 +97,6 @@ cull_mask = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.175)
 layers = 3
 mesh = SubResource("PlaneMesh_grwkl")
-
-[node name="Overlay" type="CanvasLayer" parent="."]
-visible = false
-
-[node name="Strings" type="ColorRect" parent="Overlay"]
-material = SubResource("ShaderMaterial_fsg28")
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Floor" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.31816, 0)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
-shape = SubResource("WorldBoundaryShape3D_j8qdt")
-
-[node name="CollapseCube" parent="." instance=ExtResource("9_1mylh")]
-visible = false
-
-[node name="CollapseSphere" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.49)
-visible = false
-layers = 3
-mesh = SubResource("ArrayMesh_075rg")
-
-[node name="Tadpole" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.75)
-visible = false
-layers = 3
-mesh = SubResource("CylinderMesh_xjv50")
 
 [connection signal="midi_event" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_arlez_midi_player_midi_event"]
 [connection signal="note_off" from="MidiReceiver" to="." method="_on_midi_receiver_note_off"]

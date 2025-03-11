@@ -1,10 +1,46 @@
-[gd_scene load_steps=8 format=3 uid="uid://pry5smqa7t2m"]
+[gd_scene load_steps=11 format=3 uid="uid://pry5smqa7t2m"]
 
 [ext_resource type="Script" path="res://scripts/underwater.gd" id="1_7lsbl"]
 [ext_resource type="PackedScene" uid="uid://8i8dhs3lkmxv" path="res://scenes/tadpole.tscn" id="1_ng6hd"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="2_ksfev"]
+[ext_resource type="Shader" path="res://scripts/dancing_sphere.gdshader" id="3_qv21w"]
 [ext_resource type="PackedScene" uid="uid://cy5368pba2n3j" path="res://scenes/midi_receiver.tscn" id="4_ds6g4"]
 [ext_resource type="Shader" path="res://scripts/underwater.gdshader" id="5_wjbxi"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bt2x3"]
+render_priority = 0
+shader = ExtResource("3_qv21w")
+shader_parameter/albedo = Color(0.544, 0.8, 0.5568, 1)
+shader_parameter/point_size = 1.0
+shader_parameter/roughness = 1.0
+shader_parameter/metallic_texture_channel = null
+shader_parameter/specular = 0.71
+shader_parameter/metallic = 0.0
+shader_parameter/emission = Color(1, 0.933333, 0, 0)
+shader_parameter/emission_energy = 1.0
+shader_parameter/light_intensity = 2.0
+shader_parameter/edge_softness = 0.5
+shader_parameter/core_size = 0.69
+shader_parameter/transparency = 0.9
+shader_parameter/ring_count = 20.0
+shader_parameter/ring_thickness = 0.05
+shader_parameter/ring_intensity = 0.02
+shader_parameter/head_size = 0.692
+shader_parameter/tail_length = 9.546
+shader_parameter/tail_taper = 0.561
+shader_parameter/wave_amplitude = 0.055
+shader_parameter/wave_frequency = 5.983
+shader_parameter/wave_speed = 3.183
+shader_parameter/tail_wave_multiplier = 4.523
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader_parameter/uv2_scale = Vector3(1, 1, 1)
+shader_parameter/uv2_offset = Vector3(0, 0, 0)
+
+[sub_resource type="SphereMesh" id="SphereMesh_q8nci"]
+material = SubResource("ShaderMaterial_bt2x3")
+radial_segments = 128
+rings = 128
 
 [sub_resource type="Environment" id="Environment_jxyuv"]
 background_mode = 1
@@ -22,14 +58,15 @@ shader_parameter/tint_color = Color(0, 0.4, 0.7, 1)
 script = ExtResource("1_7lsbl")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.54654)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
 projection = 1
 current = true
 size = 5.0
 
 [node name="TestTadpole" parent="." instance=ExtResource("1_ng6hd")]
-transform = Transform3D(-1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0, 0, -2.335)
+transform = Transform3D(-1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0.125, -0.16, 1.175)
 visible = false
+mesh = SubResource("SphereMesh_q8nci")
 script = null
 
 [node name="ArlezMidiPlayer" type="Node" parent="."]
