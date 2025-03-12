@@ -1,0 +1,13 @@
+[gd_scene load_steps=4 format=3 uid="uid://ce8xjht875i31"]
+
+[ext_resource type="PackedScene" uid="uid://hstcclti5c4p" path="res://scenes/waves.tscn" id="1_uhp0k"]
+[ext_resource type="Material" uid="uid://b3dae4x0fgp55" path="res://data/top_waves.tres" id="2_cjikj"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_uy26o"]
+material = ExtResource("2_cjikj")
+size = Vector2(6, 2)
+subdivide_width = 105
+subdivide_depth = 105
+
+[node name="TopWaves" instance=ExtResource("1_uhp0k")]
+mesh = SubResource("PlaneMesh_uy26o")

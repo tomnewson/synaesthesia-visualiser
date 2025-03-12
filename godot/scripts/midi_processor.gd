@@ -4,22 +4,28 @@ extends Node3D
 @onready var environment: Environment = $WorldEnvironment.environment
 @onready var overlay: MeshInstance3D = $ScreenReader
 @onready var waves: MeshInstance3D = $Waves
+@onready var light: SpotLight3D = $SpotLight3D
+@onready var strings: MeshInstance3D = $Strings
+@onready var top_waves: MeshInstance3D = $TopWaves
 
 const MAX_VELOCITY = 1000.0
 const MAX_VELOCITIES = {
-	Globals.InstrumentCategory.GUITAR: 200.0,
+	Globals.InstrumentCategory.GUITAR: 300.0,
 	Globals.InstrumentCategory.PIPE: 100.0,
 	Globals.InstrumentCategory.PERCUSSIVE: 100.0,
+	Globals.InstrumentCategory.BASS: 100.0, # TEMP
 }
 
 const INSTRUMENT_MAP = {
 	"waves": Globals.InstrumentCategory.PIPE,
 	"strings": Globals.InstrumentCategory.GUITAR,
 	"light": Globals.InstrumentCategory.PERCUSSIVE,
+	"top_waves": Globals.InstrumentCategory.BASS,
 }
 
 const BASE_WAVES_INTENSITY = 0.1
-const BASE_LIGHT_POSITION = Vector3(0, 3.5, 1)
+const BASE_LIGHT_POSITION = Vector3(0, 1.5, 1.0)
+const BASE_LIGHT_ENERGY = 1.0
 
 const BG_TRANSITION_SPEED = 0.5
 const WAVES_TRANSITION_SPEED = 2.0
@@ -34,15 +40,18 @@ var no_notes_played: bool
 
 var target_waves_intensity: float
 var target_waves_color: Color
-var target_waves_alpha: float
+
+var target_top_waves_intensity: float
+var target_top_waves_color: Color
 
 var target_strings_width: float
 var target_strings_color: Color
 
 var target_light_position: Vector3
+var target_light_energy: float
 
-enum Note { ID, TRACK, PITCH, VELOCITY, INSTRUMENT }
-enum Instrument { PITCH, VELOCITY, COUNT }
+enum Note {ID, TRACK, PITCH, VELOCITY, INSTRUMENT}
+enum Instrument {PITCH, VELOCITY, COUNT}
 
 func lerp_between_colors(current_color: Color, target_color, transition_speed) -> Color:
 	# TODO: FEAT better color transition
@@ -54,23 +63,33 @@ func lerp_between_colors(current_color: Color, target_color, transition_speed) -
 	return Color.from_hsv(new_hue, new_sat, new_val, new_alpha)
 
 func reset_waves():
-	var material = $Waves.mesh.material
+	var material = waves.mesh.material
 	material.set_shader_parameter("amplitude", BASE_WAVES_INTENSITY)
 	material.set_shader_parameter("add_color", Color.TRANSPARENT)
 	material.set_shader_parameter("alpha", 0.0)
 
 	target_waves_color = Color.TRANSPARENT
 	target_waves_intensity = BASE_WAVES_INTENSITY
-	target_waves_alpha = 0;
+
+func reset_top_waves():
+	var material = top_waves.mesh.material
+	material.set_shader_parameter("amplitude", BASE_WAVES_INTENSITY)
+	material.set_shader_parameter("add_color", Color.TRANSPARENT)
+	material.set_shader_parameter("alpha", 0.0)
+
+	target_top_waves_color = Color.TRANSPARENT
+	target_top_waves_intensity = BASE_WAVES_INTENSITY
 
 func reset_strings():
-	$Strings.mesh.material.set_shader_parameter("lineColor", Color.TRANSPARENT)
+	strings.mesh.material.set_shader_parameter("lineColor", Color.TRANSPARENT)
 	target_strings_width = 0.0
 	target_strings_color = Color.TRANSPARENT
 
 func reset_light():
-	$SpotLight3D.transform.origin = BASE_LIGHT_POSITION
-	target_light_position = $SpotLight3D.transform.origin
+	light.transform.origin = BASE_LIGHT_POSITION
+	target_light_position = BASE_LIGHT_POSITION
+	light.light_energy = BASE_LIGHT_ENERGY
+	target_light_energy = BASE_LIGHT_ENERGY
 
 func _ready() -> void:
 	midi_player.play()
@@ -82,6 +101,7 @@ func _ready() -> void:
 	reset_waves()
 	reset_strings()
 	reset_light()
+	reset_top_waves()
 
 func _process(delta):
 	# TODO: FIX lerp to properly transition according to delta
@@ -89,6 +109,7 @@ func _process(delta):
 	update_waves_mat(delta)
 	update_strings_mat(delta)
 	update_light(delta)
+	update_top_waves(delta)
 
 func lerp_shader(mat: ShaderMaterial, param: String, target, speed: float, isColor: int = false):
 	var current = mat.get_shader_parameter(param)
@@ -98,11 +119,30 @@ func lerp_shader(mat: ShaderMaterial, param: String, target, speed: float, isCol
 	)
 
 func update_light(delta):
-	$SpotLight3D.transform.origin = lerp($SpotLight3D.transform.origin, target_light_position, LIGHT_TRANSITION_SPEED * delta)
+	var current_pos = light.transform.origin
+	light.transform.origin = lerp(current_pos, target_light_position, LIGHT_TRANSITION_SPEED * delta)
+	var current_energy = light.light_energy
+	light.light_energy = lerp(current_energy, target_light_energy, LIGHT_TRANSITION_SPEED * delta)
 
 func update_background(delta):
 	var current_bg_colour = environment.background_color
 	environment.background_color = lerp_between_colors(current_bg_colour, target_bg_color, BG_TRANSITION_SPEED * delta)
+
+func update_top_waves(delta):
+	var material: ShaderMaterial = top_waves.mesh.material
+	lerp_shader(
+		material,
+		"amplitude",
+		target_top_waves_intensity,
+		WAVES_TRANSITION_SPEED * delta,
+	)
+	lerp_shader(
+		material,
+		"add_color",
+		target_top_waves_color,
+		WAVES_TRANSITION_SPEED * delta,
+		true
+	)
 
 func update_waves_mat(delta):
 	var waves_mat: ShaderMaterial = waves.mesh.material
@@ -119,15 +159,9 @@ func update_waves_mat(delta):
 		WAVES_TRANSITION_SPEED * delta,
 		true
 	)
-	lerp_shader(
-		waves_mat,
-		"alpha",
-		target_waves_alpha,
-		WAVES_TRANSITION_SPEED * delta,
-	)
 
 func update_strings_mat(delta):
-	var strings_mat: ShaderMaterial = $Strings.mesh.material
+	var strings_mat: ShaderMaterial = strings.mesh.material
 	lerp_shader(
 		strings_mat,
 		"width",
@@ -141,9 +175,6 @@ func update_strings_mat(delta):
 		STRINGS_TRANSITION_SPEED * delta,
 		true,
 	)
-
-func sigmoid(value: float, steepness: float, midpoint: float) -> float:
-	return 1.0 / (1.0 + exp(-steepness * (value - midpoint)))
 
 func color_from_notes(
 	avg_pitch: float,
@@ -164,16 +195,15 @@ func color_from_notes(
 
 func update_active_notes():
 	if active_notes.is_empty():
-		#target_bg_color = Color.BLACK
-		set_waves_targets(0,0,0)
-		set_strings_targets(0,0,0)
-		set_light_targets(0,0,0)
+		set_waves_targets(0, 0, 0)
+		set_strings_targets(0, 0, 0)
+		set_light_targets(0, 0, 0)
 		return
 
-	var instrument_stats = {"total": [0,0]}
+	var instrument_stats = {"total": [0, 0]}
 	# clear instruments
 	for i in Globals.InstrumentCategory.values():
-		instrument_stats[i] = [0,0,0]
+		instrument_stats[i] = [0, 0, 0]
 
 	for n in active_notes:
 		var pitch = n[Note.PITCH]
@@ -217,15 +247,42 @@ func update_active_notes():
 		light_instrument[Instrument.COUNT],
 	)
 
+	# top waves
+	var top_waves_instrument = instrument_stats[INSTRUMENT_MAP["top_waves"]]
+	print("top waves velocity: ", top_waves_instrument[Instrument.VELOCITY])
+	set_top_waves_targets(
+		top_waves_instrument[Instrument.PITCH],
+		top_waves_instrument[Instrument.VELOCITY],
+		top_waves_instrument[Instrument.COUNT],
+	)
+
+
+
+func set_top_waves_targets(sum_pitch, velocity, count):
+	var max_velocity = MAX_VELOCITIES[INSTRUMENT_MAP["top_waves"]]
+	target_top_waves_intensity = BASE_WAVES_INTENSITY + (clamp(velocity, 0, max_velocity) / max_velocity) / 3.0
+
+	var alpha = remap(velocity, 0, max_velocity, 0.0, 0.5)
+	var sat = remap(velocity, 0, max_velocity, 0.5, 0.8)
+	var val = remap(velocity, 0, max_velocity, 0.6, 0.8)
+	var hue
+	if count:
+		var avg_waves_pitch = sum_pitch / count
+		hue = avg_waves_pitch / MAX_PITCH
+	else:
+		hue = target_top_waves_color.h
+
+	target_top_waves_color = Color.from_hsv(hue, sat, val, alpha)
+
 func set_light_targets(sum_pitch, velocity, count):
+	var max_velocity = MAX_VELOCITIES[INSTRUMENT_MAP["light"]]
+	target_light_energy = remap(velocity, 0, max_velocity, BASE_LIGHT_ENERGY, 8.0)
+
 	if (count == 0):
 		target_light_position = BASE_LIGHT_POSITION
-		return
-
-	var max_velocity = MAX_VELOCITIES[INSTRUMENT_MAP["light"]]
-	var target_y = remap(velocity, 0, max_velocity, BASE_LIGHT_POSITION.y, 1.5)
-	var target_x = remap(sum_pitch / count, 0, MAX_PITCH, -2.5, 2.5)
-	target_light_position = Vector3(target_x, target_y, 1)
+	else:
+		var target_x = remap(sum_pitch / count, 0, MAX_PITCH, -2.5, 2.5)
+		target_light_position = Vector3(target_x, BASE_LIGHT_POSITION.y, BASE_LIGHT_POSITION.z)
 
 func set_waves_targets(sum_pitch, velocity, count):
 	var max_velocity = MAX_VELOCITIES[INSTRUMENT_MAP["waves"]]
@@ -241,19 +298,25 @@ func set_waves_targets(sum_pitch, velocity, count):
 		hue = target_waves_color.h
 
 	target_waves_color = Color.from_hsv(hue, sat, val)
-	target_waves_alpha = 1.0
 
 func set_strings_targets(sum_pitch, sum_velocity, count):
 	var max_velocity = MAX_VELOCITIES[INSTRUMENT_MAP["strings"]]
 	sum_velocity = clamp(sum_velocity, 0, max_velocity)
+	target_strings_width = remap(sum_velocity, 0, max_velocity, 0.2, 0.5)
+
+	var alpha = sum_velocity / max_velocity
+	var sat = remap(sum_velocity, 0, max_velocity, 0.5, 0.8)
+	var val = remap(sum_velocity, 0, max_velocity, 0.6, 0.8)
+	var hue
 	if count:
-		var avg_strings_pitch = sum_pitch / count
-		target_strings_color = color_from_notes(avg_strings_pitch, sum_velocity, max_velocity)
-		target_strings_width = 1.0 - (avg_strings_pitch / MAX_PITCH)
-	target_strings_color.a = sum_velocity / max_velocity
+		var avg_pitch = sum_pitch / count
+		hue = avg_pitch / MAX_PITCH
+	else:
+		hue = target_strings_color.h
+	target_strings_color = Color.from_hsv(hue, sat, val, alpha)
 
 func _on_midi_receiver_note_on(note_id, note, velocity, track, instrument) -> void:
-	var sigmoided_note = sigmoid(note, 0.5, 55) * MAX_PITCH
+	var sigmoided_note = Globals.sigmoid(note)
 	active_notes.append([note_id, track, sigmoided_note, velocity, instrument])
 	update_active_notes()
 

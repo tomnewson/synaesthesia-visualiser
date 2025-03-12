@@ -61,7 +61,6 @@ func calculate_y_offset(pitch: float) -> float:
 func _on_midi_receiver_note_on(note_id, note, velocity, track, instrument) -> void:
 	# sigmoid function on note
 	note = sigmoid(note, 0.2, 74) * MAX_PITCH
-	print("sigmoid ", note)
 
 	var tadpole = preload("res://scenes/tadpole.tscn").instantiate()
 	tadpole.show_direction_indicator = false

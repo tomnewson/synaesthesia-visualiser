@@ -11,7 +11,7 @@ render_mode depth_draw_always, diffuse_burley;
 
 void vertex() {
     // Calculate wave displacement
-    float wave = sin(VERTEX.x * wave_direction.x * frequency +
+    float wave = cos(VERTEX.x * wave_direction.x * frequency +
                     VERTEX.z * wave_direction.y * frequency +
                     TIME * speed);
 
@@ -22,14 +22,13 @@ void vertex() {
     // Apply displacement to Y-axis
     //VERTEX.y += wave * amplitude;
 
-	float wave2 = sin(VERTEX.x * frequency * 0.8 + TIME * speed * 1.2 + 1.0);
+	float wave2 = cos(VERTEX.x * frequency * 0.8 + TIME * speed * 1.2 + 1.0);
 	VERTEX.y += (wave + wave2) * amplitude * 0.5;
     // Optional: Add slight offset to normals for better lighting
     NORMAL = normalize(NORMAL + vec3(0.0, wave * 0.2, 0.0));
 }
 
 void fragment() {
-    // Additive color blending (Photoshop-style ADD)
     ALBEDO = add_color.rgb;
 	ALPHA = add_color.a;
 	ROUGHNESS = 0.4;
