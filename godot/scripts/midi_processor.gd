@@ -2,25 +2,24 @@ extends Node3D
 
 @onready var midi_player = $ArlezMidiPlayer
 @onready var environment: Environment = $WorldEnvironment.environment
-@onready var overlay: MeshInstance3D = $ScreenReader
 @onready var waves: MeshInstance3D = $Waves
 @onready var light: SpotLight3D = $SpotLight3D
 @onready var strings: MeshInstance3D = $Strings
-@onready var top_waves: MeshInstance3D = $TopWaves
+@onready var strings_2: MeshInstance3D = $TopWaves
 
-const MAX_VELOCITY = 1000.0
+const MAX_VELOCITY = 900.0
 const MAX_VELOCITIES = {
 	Globals.InstrumentCategory.GUITAR: 300.0,
 	Globals.InstrumentCategory.PIPE: 100.0,
-	Globals.InstrumentCategory.PERCUSSIVE: 100.0,
-	Globals.InstrumentCategory.BASS: 100.0, # TEMP
+	Globals.InstrumentCategory.PERCUSSIVE: 400.0,
+	Globals.InstrumentCategory.BASS: 100.0,
 }
 
 const INSTRUMENT_MAP = {
 	"waves": Globals.InstrumentCategory.PIPE,
 	"strings": Globals.InstrumentCategory.GUITAR,
 	"light": Globals.InstrumentCategory.PERCUSSIVE,
-	"top_waves": Globals.InstrumentCategory.BASS,
+	"strings_2": Globals.InstrumentCategory.BASS,
 }
 
 const BASE_WAVES_INTENSITY = 0.1
@@ -36,7 +35,6 @@ const MAX_PITCH = 127.0
 
 var active_notes = []
 var target_bg_color: Color
-var no_notes_played: bool
 
 var target_waves_intensity: float
 var target_waves_color: Color
@@ -72,7 +70,7 @@ func reset_waves():
 	target_waves_intensity = BASE_WAVES_INTENSITY
 
 func reset_top_waves():
-	var material = top_waves.mesh.material
+	var material = strings_2.mesh.material
 	material.set_shader_parameter("amplitude", BASE_WAVES_INTENSITY)
 	material.set_shader_parameter("add_color", Color.TRANSPARENT)
 	material.set_shader_parameter("alpha", 0.0)
@@ -93,7 +91,6 @@ func reset_light():
 
 func _ready() -> void:
 	midi_player.play()
-	no_notes_played = true
 
 	environment.background_color = Color.BLACK
 	target_bg_color = Color.BLACK
@@ -129,7 +126,7 @@ func update_background(delta):
 	environment.background_color = lerp_between_colors(current_bg_colour, target_bg_color, BG_TRANSITION_SPEED * delta)
 
 func update_top_waves(delta):
-	var material: ShaderMaterial = top_waves.mesh.material
+	var material: ShaderMaterial = strings_2.mesh.material
 	lerp_shader(
 		material,
 		"amplitude",
@@ -198,6 +195,7 @@ func update_active_notes():
 		set_waves_targets(0, 0, 0)
 		set_strings_targets(0, 0, 0)
 		set_light_targets(0, 0, 0)
+		set_top_waves_targets(0, 0, 0)
 		return
 
 	var instrument_stats = {"total": [0, 0]}
@@ -217,11 +215,20 @@ func update_active_notes():
 		instrument_stats[instrument][Instrument.VELOCITY] += velocity
 		instrument_stats[instrument][Instrument.COUNT] += 1
 
-	var avg_pitch = instrument_stats["total"][Instrument.PITCH] / len(active_notes)
+	var count_total = len(active_notes)
+	var avg_pitch = instrument_stats["total"][Instrument.PITCH] / count_total
 	var clamped_sv = clamp(instrument_stats["total"][Instrument.VELOCITY], 0, MAX_VELOCITY)
 
 	# background
 	target_bg_color = color_from_notes(avg_pitch, clamped_sv, MAX_VELOCITY)
+
+	# top waves
+	var top_waves_instrument = instrument_stats["total"]
+	set_top_waves_targets(
+		top_waves_instrument[Instrument.PITCH],
+		clamped_sv,
+		count_total,
+	)
 
 	# waves
 	var wave_instrument = instrument_stats[INSTRUMENT_MAP["waves"]]
@@ -233,10 +240,11 @@ func update_active_notes():
 
 	# strings
 	var strings_instrument = instrument_stats[INSTRUMENT_MAP["strings"]]
+	var strings_instrument_2 = instrument_stats[INSTRUMENT_MAP["strings_2"]]
 	set_strings_targets(
-		strings_instrument[Instrument.PITCH],
-		strings_instrument[Instrument.VELOCITY],
-		strings_instrument[Instrument.COUNT],
+		strings_instrument[Instrument.PITCH] + strings_instrument_2[Instrument.PITCH],
+		strings_instrument[Instrument.VELOCITY] + strings_instrument_2[Instrument.VELOCITY],
+		strings_instrument[Instrument.COUNT] + strings_instrument_2[Instrument.COUNT],
 	)
 
 	# light
@@ -247,19 +255,8 @@ func update_active_notes():
 		light_instrument[Instrument.COUNT],
 	)
 
-	# top waves
-	var top_waves_instrument = instrument_stats[INSTRUMENT_MAP["top_waves"]]
-	print("top waves velocity: ", top_waves_instrument[Instrument.VELOCITY])
-	set_top_waves_targets(
-		top_waves_instrument[Instrument.PITCH],
-		top_waves_instrument[Instrument.VELOCITY],
-		top_waves_instrument[Instrument.COUNT],
-	)
-
-
-
 func set_top_waves_targets(sum_pitch, velocity, count):
-	var max_velocity = MAX_VELOCITIES[INSTRUMENT_MAP["top_waves"]]
+	var max_velocity = MAX_VELOCITY
 	target_top_waves_intensity = BASE_WAVES_INTENSITY + (clamp(velocity, 0, max_velocity) / max_velocity) / 3.0
 
 	var alpha = remap(velocity, 0, max_velocity, 0.0, 0.5)
@@ -300,7 +297,7 @@ func set_waves_targets(sum_pitch, velocity, count):
 	target_waves_color = Color.from_hsv(hue, sat, val)
 
 func set_strings_targets(sum_pitch, sum_velocity, count):
-	var max_velocity = MAX_VELOCITIES[INSTRUMENT_MAP["strings"]]
+	var max_velocity = MAX_VELOCITIES[INSTRUMENT_MAP["strings"]] + MAX_VELOCITIES[INSTRUMENT_MAP["strings_2"]]
 	sum_velocity = clamp(sum_velocity, 0, max_velocity)
 	target_strings_width = remap(sum_velocity, 0, max_velocity, 0.2, 0.5)
 

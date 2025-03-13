@@ -1,10 +1,8 @@
-[gd_scene load_steps=15 format=3 uid="uid://bts85jkpxcyyl"]
+[gd_scene load_steps=12 format=3 uid="uid://bts85jkpxcyyl"]
 
 [ext_resource type="Script" path="res://scripts/midi_processor.gd" id="1_3kk6h"]
 [ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="3_1tp21"]
 [ext_resource type="PackedScene" uid="uid://cy5368pba2n3j" path="res://scenes/midi_receiver.tscn" id="3_q3lke"]
-[ext_resource type="Material" uid="uid://ua4rqa7bo2pd" path="res://data/screen_reader_material.tres" id="5_3frte"]
-[ext_resource type="Script" path="res://scripts/screen_reader.gd" id="6_mtn6x"]
 [ext_resource type="PackedScene" uid="uid://hstcclti5c4p" path="res://scenes/waves.tscn" id="7_le7pq"]
 [ext_resource type="PackedScene" uid="uid://ce8xjht875i31" path="res://scenes/top_waves.tscn" id="8_d61oi"]
 [ext_resource type="Shader" path="res://scripts/strings.gdshader" id="8_yp5tl"]
@@ -26,11 +24,6 @@ fog_light_energy = 0.0
 fog_sun_scatter = 0.58
 fog_density = 0.7395
 volumetric_fog_density = 0.2265
-
-[sub_resource type="QuadMesh" id="QuadMesh_74lex"]
-material = ExtResource("5_3frte")
-flip_faces = true
-size = Vector2(2, 2)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_a7wmh"]
 render_priority = 0
@@ -76,23 +69,8 @@ current = true
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_xo5ig")
 
-[node name="ScreenReader" type="MeshInstance3D" parent="."]
-visible = false
-extra_cull_margin = 16384.0
-mesh = SubResource("QuadMesh_74lex")
-skeleton = NodePath("")
-script = ExtResource("6_mtn6x")
-
 [node name="Waves" parent="." instance=ExtResource("7_le7pq")]
 transform = Transform3D(1, 0, 0, 0, 0.705871, -0.70834, 0, 0.70834, 0.705871, 0, -0.24026, -1.1051)
-
-[node name="WavesViewport" type="SubViewport" parent="."]
-transparent_bg = true
-size = Vector2i(1920, 1080)
-render_target_update_mode = 4
-
-[node name="Camera3D" type="Camera3D" parent="WavesViewport"]
-cull_mask = 2
 
 [node name="Strings" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.175)
