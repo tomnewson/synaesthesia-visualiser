@@ -96,8 +96,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Bubbles" type="CPUParticles2D" parent="UnderwaterOverlay"]
-
 [connection signal="midi_event" from="ArlezMidiPlayer" to="MidiReceiver" method="_on_arlez_midi_player_midi_event"]
 [connection signal="note_off" from="MidiReceiver" to="." method="_on_midi_receiver_note_off"]
 [connection signal="note_on" from="MidiReceiver" to="." method="_on_midi_receiver_note_on"]

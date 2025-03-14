@@ -23,24 +23,13 @@ func _ready() -> void:
 	sphere_mesh.height = single_note_size * 2
 	box_mesh.material = material
 	box_mesh.size = Vector3(single_note_size, single_note_size, single_note_size)
-	
+
 func _process(delta:float):
 	for child in self.get_children():
-		#if child is Path3D and child.curve.point_count > 0:
-			#var center = calculate_center(child.curve)
-			#var rotation_angle = deg_to_rad(rotation_speed * delta)
-			##var rotation_transform = Transform3D(Basis(Vector3.UP, rotation_angle), Vector3.ZERO)
-##
-			### Apply rotation transformation relative to the center
-			##child.global_transform.origin -= center
-			##child.global_transform = rotation_transform * child.global_transform
-			##child.global_transform.origin += center
-			#child.rotate_object
-			#child.rotate_object_local(Vector3.UP, rotation_angle)
 		if child is MeshInstance3D:
 			child.rotate_object_local(Vector3.UP, deg_to_rad(rotation_speed * delta))
-		
-	
+
+
 func calculate_center(curve: Curve3D):
 	var min = curve.get_point_position(0)
 	var max = curve.get_point_position(0)
@@ -53,13 +42,13 @@ func calculate_center(curve: Curve3D):
 
 	# Return the center point
 	return min + (max - min) * 0.5
-	
+
 func _show_markers():
 	var marker = MeshInstance3D.new()
 	marker.mesh = sphere_mesh
 	marker.translate(Vector3(0,0,-7))
 	add_child(marker)
-	
+
 func update_material():
 	# Adjust material properties
 	if notes.is_empty(): return
@@ -73,7 +62,7 @@ func update_material():
 		brights += n[BRIGHTNESS]
 		opacs += n[OPACITY]
 		roughs += n[ROUGHNESS]
-		
+
 	material.albedo_color = Color.from_hsv(
 		hues / l,
 		1.0,
@@ -81,7 +70,7 @@ func update_material():
 		opacs / l
 	)
 	material.roughness = roughs / l
-	
+
 func _insert_into_sorted_list(sorted_list, arr):
 	# binary search insert sorted by y axis
 	var value = arr[POSITION].y
@@ -99,22 +88,22 @@ func _insert_into_sorted_list(sorted_list, arr):
 			right = mid - 1
 
 	sorted_list.insert(left, arr)
-	
+
 func _render_single_note(pos):
 	var mesh_instance = MeshInstance3D.new()
-	
+
 	# render sphere per note
 	mesh_instance.mesh = box_mesh
 	mesh_instance.translate(pos)
-	
+
 	self.add_child(mesh_instance)
-	
+
 func _render_track():
 	path.curve.clear_points()
 	for child in self.get_children():
 		if child is MeshInstance3D:
 			self.remove_child(child)
-			
+
 	match notes.size():
 		0:
 			return
@@ -131,7 +120,7 @@ func add_note(key: String, pos: Vector3, hue: float, brightness: float, opacity:
 	self._insert_into_sorted_list(
 		notes,
 		[
-			key, 
+			key,
 			pos,
 			hue,
 			brightness,
@@ -140,7 +129,7 @@ func add_note(key: String, pos: Vector3, hue: float, brightness: float, opacity:
 		],
 	)
 	self._render_track()
-	
+
 func remove_note(key: String):
 	for i in notes.size():
 		if notes[i][KEY] == key:

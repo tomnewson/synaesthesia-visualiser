@@ -88,6 +88,7 @@ func reset_light():
 	light.light_energy = BASE_LIGHT_ENERGY
 	target_light_energy = BASE_LIGHT_ENERGY
 
+# Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	midi_player.play()
 
@@ -99,6 +100,7 @@ func _ready() -> void:
 	reset_light()
 	reset_top_waves()
 
+# Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	update_background(delta)
 	update_waves_mat(delta)
@@ -171,6 +173,7 @@ func update_strings_mat(delta):
 		true,
 	)
 
+# Returns a color based on the average pitch and velocity of active notes
 func color_from_notes(
 	avg_pitch: float,
 	sum_velocity: float,
