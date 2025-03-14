@@ -38,3 +38,4 @@ project.godot
 TestScene.tscn
 TestScene.gd
 addons/
+godot_executables/
