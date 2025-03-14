@@ -38,6 +38,13 @@ cd /path/to/synaesthesia_visualiser
 python python/src/tracks.py
 ```
 
+## Running the Godot Project as an executable
+If there are executables within the godot_executables directory:
+1. Select the exe/x86_64 for your system (Windows / Linux)
+2. Run it.
+3. Select the visualisation of a single track MIDI file (one piano) or of a multi track file (multiple instruments)
+4. Enjoy!
+
 ## Running the Godot Project within the Godot Editor
 
 ### Dependencies
