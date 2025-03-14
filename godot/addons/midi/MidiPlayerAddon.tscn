@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cuyd1qv0pn26e"]
+
+[ext_resource type="Script" path="res://addons/midi/MidiPlayerAddon.gd" id="1_fc0v7"]
+
+[node name="MidiPlayerAddon" type="Node"]
+script = ExtResource("1_fc0v7")
