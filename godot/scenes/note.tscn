@@ -1,9 +1,0 @@
-[gd_scene load_steps=3 format=3 uid="uid://taibgqoypxpk"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sneky"]
-
-[sub_resource type="SphereMesh" id="SphereMesh_6ga43"]
-material = SubResource("StandardMaterial3D_sneky")
-
-[node name="Note" type="MeshInstance3D"]
-mesh = SubResource("SphereMesh_6ga43")

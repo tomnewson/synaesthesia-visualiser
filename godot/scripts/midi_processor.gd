@@ -52,7 +52,6 @@ enum Note {ID, TRACK, PITCH, VELOCITY, INSTRUMENT}
 enum Instrument {PITCH, VELOCITY, COUNT}
 
 func lerp_between_colors(current_color: Color, target_color, transition_speed) -> Color:
-	# TODO: FEAT better color transition
 	var new_hue = lerp(current_color.h, target_color.h, transition_speed)
 	var new_sat = lerp(current_color.s, target_color.s, transition_speed)
 	var new_val = lerp(current_color.s, target_color.v, transition_speed)
@@ -101,7 +100,6 @@ func _ready() -> void:
 	reset_top_waves()
 
 func _process(delta):
-	# TODO: FIX lerp to properly transition according to delta
 	update_background(delta)
 	update_waves_mat(delta)
 	update_strings_mat(delta)
@@ -255,6 +253,11 @@ func update_active_notes():
 		light_instrument[Instrument.COUNT],
 	)
 
+# Updates the visual parameters for the top waves visualization based on MIDI input
+# Parameters:
+# - sum_pitch: Total pitch value of active notes for this instrument
+# - velocity: Total velocity (volume) of active notes
+# - count: Number of active notes for this instrument
 func set_top_waves_targets(sum_pitch, velocity, count):
 	var max_velocity = MAX_VELOCITY
 	target_top_waves_intensity = BASE_WAVES_INTENSITY + (clamp(velocity, 0, max_velocity) / max_velocity) / 3.0
@@ -312,11 +315,22 @@ func set_strings_targets(sum_pitch, sum_velocity, count):
 		hue = target_strings_color.h
 	target_strings_color = Color.from_hsv(hue, sat, val, alpha)
 
+# Handles MIDI note-on events (when a key is pressed)
+# Parameters:
+# - note_id: Unique identifier for the note
+# - note: The pitch value of the note
+# - velocity: The intensity/volume of the note
+# - track: The MIDI track number
+# - instrument: The instrument category for this note
 func _on_midi_receiver_note_on(note_id, note, velocity, track, instrument) -> void:
 	var sigmoided_note = Globals.sigmoid(note)
 	active_notes.append([note_id, track, sigmoided_note, velocity, instrument])
 	update_active_notes()
 
+# Handles MIDI note-off events (when a key is released)
+# Parameters:
+# - note_id: Unique identifier for the note to turn off
+# - track: The MIDI track number
 func _on_midi_receiver_note_off(note_id, track) -> void:
 	for n in active_notes:
 		if n[Note.ID] == note_id:

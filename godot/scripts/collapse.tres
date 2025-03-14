@@ -26,8 +26,6 @@ uniform vec3 uv2_offset;
 uniform sampler2D distortionTexture;
 
 uniform float progress: hint_range(0.0, 1.0, 0.1) = 0.5;
-//uniform float scale: hint_range(0.0, 50.0, 0.1) = 50.0;
-//uniform float intensity: hint_range(0.0, 0.1, 0.01) = 0.1;
 
 void vertex() {
     vec3 original = VERTEX.xyz;
@@ -47,31 +45,6 @@ void vertex() {
     VERTEX.xyz = scaled + displacement;
 	VERTEX.xyz *= 1.0 - progress;
 }
-
-//void vertex() {
-	//UV = UV * uv1_scale.xy + uv1_offset.xy;
-	//float distortion = texture(distortionTexture, UV).r / 2.0;
-	////VERTEX.x *= sin(TIME) + 1.0;
-	////VERTEX.y *= sin(TIME) + 1.0;
-	////VERTEX.z *= sin(TIME) + 1.0;
-	//
-	////VERTEX.x *= 1.0 + -abs(2.0 * sin(TIME)) * distortion * (1.0 - abs(VERTEX.x));
-	////VERTEX.y *= 1.0 + -abs(2.0 * sin(TIME)) * distortion * (1.0 - abs(VERTEX.y));
-	////VERTEX.z *= 1.0 + -abs(2.0 * sin(TIME)) * distortion * (1.0 - abs(VERTEX.z));
-	////float dist = distortion * intensity;
-	////VERTEX.x *= 1.0 + -(progress * scale) * dist * (1.0 - abs(VERTEX.x));
-	////VERTEX.y *= 1.0 + -(progress * scale) * dist * (1.0 - abs(VERTEX.y));
-	////VERTEX.z *= 1.0 + -(progress * scale) * dist * (1.0 - abs(VERTEX.z));
-	//float i = 1.0;
-	//float size = 1.0 - progress;
-	//float dist = clamp(progress * (distortion * i - 0.25), 0.0, 0.05);
-	//VERTEX.x *= size;
-	//VERTEX.x += dist * (1.0 - abs(VERTEX.x));
-	//VERTEX.y *= size;
-	//VERTEX.y += dist* (1.0 - abs(VERTEX.y));
-	//VERTEX.z *= size;
-	//VERTEX.z += dist* (1.0 - abs(VERTEX.z));
-//}
 
 void fragment() {
 	vec2 base_uv = UV;

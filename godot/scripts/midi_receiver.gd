@@ -1,24 +1,24 @@
 extends Node
 
-signal note_on ( note_id, note, velocity, track )
-signal note_off ( note_id, track )
+signal note_on(note_id, note, velocity, track)
+signal note_off(note_id, track)
 
 # Map of common program numbers to instrument categories
 const PROGRAM_CATEGORY_MAP = {
 	# Pianos
-	0: Globals.InstrumentCategory.PIANO,    # Acoustic Grand Piano
-	1: Globals.InstrumentCategory.PIANO,    # Bright Acoustic Piano
-	2: Globals.InstrumentCategory.PIANO,    # Electric Grand Piano
+	0: Globals.InstrumentCategory.PIANO, # Acoustic Grand Piano
+	1: Globals.InstrumentCategory.PIANO, # Bright Acoustic Piano
+	2: Globals.InstrumentCategory.PIANO, # Electric Grand Piano
 
 	# Guitars
-	24: Globals.InstrumentCategory.GUITAR,  # Acoustic Guitar (Nylon)
-	25: Globals.InstrumentCategory.GUITAR,  # Acoustic Guitar (Steel)
-	26: Globals.InstrumentCategory.GUITAR,  # Electric Guitar (Jazz)
+	24: Globals.InstrumentCategory.GUITAR, # Acoustic Guitar (Nylon)
+	25: Globals.InstrumentCategory.GUITAR, # Acoustic Guitar (Steel)
+	26: Globals.InstrumentCategory.GUITAR, # Electric Guitar (Jazz)
 
 	# Basses
-	32: Globals.InstrumentCategory.BASS,    # Acoustic Bass
-	33: Globals.InstrumentCategory.BASS,    # Electric Bass (Finger)
-	34: Globals.InstrumentCategory.BASS,    # Electric Bass (Pick)
+	32: Globals.InstrumentCategory.BASS, # Acoustic Bass
+	33: Globals.InstrumentCategory.BASS, # Electric Bass (Finger)
+	34: Globals.InstrumentCategory.BASS, # Electric Bass (Pick)
 
 	# Strings
 	40: Globals.InstrumentCategory.STRINGS, # Violin
@@ -26,18 +26,18 @@ const PROGRAM_CATEGORY_MAP = {
 	42: Globals.InstrumentCategory.STRINGS, # Cello
 
 	# Wind instruments
-	73: Globals.InstrumentCategory.PIPE,    # Flute
-	74: Globals.InstrumentCategory.PIPE,    # Recorder
-	75: Globals.InstrumentCategory.PIPE,    # Pan Flute
+	73: Globals.InstrumentCategory.PIPE, # Flute
+	74: Globals.InstrumentCategory.PIPE, # Recorder
+	75: Globals.InstrumentCategory.PIPE, # Pan Flute
 
 	# Brass
-	56: Globals.InstrumentCategory.BRASS,   # Trumpet
-	57: Globals.InstrumentCategory.BRASS,   # Trombone
-	58: Globals.InstrumentCategory.BRASS,   # Tuba
+	56: Globals.InstrumentCategory.BRASS, # Trumpet
+	57: Globals.InstrumentCategory.BRASS, # Trombone
+	58: Globals.InstrumentCategory.BRASS, # Tuba
 
 	# Synth
-	80: Globals.InstrumentCategory.SYNTH,   # Square Wave
-	81: Globals.InstrumentCategory.SYNTH    # Saw Wave
+	80: Globals.InstrumentCategory.SYNTH, # Square Wave
+	81: Globals.InstrumentCategory.SYNTH # Saw Wave
 }
 
 var channel_instrument_map = {}
@@ -52,6 +52,11 @@ func get_category_name(category: int) -> String:
 func _note_id(channel, event):
 	return str(channel.get_instance_id()) + str(event.note)
 
+# Handler for MIDI events from the MIDI player.
+# Processes different event types (program change, note on/off) and emits appropriate signals.
+# Parameters:
+#   channel: The MIDI channel information including instrument and channel number
+#   event: The MIDI event data containing type, note, velocity, etc.
 func _on_arlez_midi_player_midi_event(channel: MidiPlayerAddon.GodotMIDIPlayerChannelStatus, event: Variant) -> void:
 	match event.type:
 		SMF.MIDIEventType.program_change:

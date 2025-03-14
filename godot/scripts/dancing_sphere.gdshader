@@ -111,7 +111,7 @@ void fragment() {
 	// Calculate distance from center for radial effect (in local model space)
 	float distance_from_center = length(NORMAL);
 
-	// Create gradient falloff for light effect
+	// Create gradient falloff for light effect as you move away from center
 	float falloff = smoothstep(core_size, 1.0, distance_from_center * edge_softness);
 	float light_factor = 1.0 - falloff;
 
@@ -134,9 +134,8 @@ void fragment() {
 	ALPHA = alpha_value * ring_pattern;
 
 	// Metallic and roughness properties
-
-	METALLIC = 0.0; // Reduce metallic for more light-like appearance
-	SPECULAR = 1.5; // Enhance specular for light effect
-	ROUGHNESS = 2.0; // Lower roughness for more light-like appearance
+	METALLIC = 0.0;
+	SPECULAR = 1.5;
+	ROUGHNESS = 2.0;
 
 }

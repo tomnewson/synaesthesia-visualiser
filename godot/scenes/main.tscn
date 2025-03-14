@@ -18,7 +18,7 @@ sky_material = SubResource("ProceduralSkyMaterial_8urim")
 
 [sub_resource type="Environment" id="Environment_xo5ig"]
 background_mode = 1
-background_color = Color(0.489533, 0.392, 0.7, 1)
+background_color = Color(0.303114, 0.513571, 0.3666, 1)
 sky = SubResource("Sky_pbdgm")
 fog_light_energy = 0.0
 fog_sun_scatter = 0.58

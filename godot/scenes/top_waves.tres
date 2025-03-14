@@ -1,0 +1,12 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://b3dae4x0fgp55"]
+
+[ext_resource type="Shader" path="res://scripts/top_waves.gdshader" id="1_okkdt"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_okkdt")
+shader_parameter/amplitude = 0.3
+shader_parameter/frequency = 4.02
+shader_parameter/speed = 4.535
+shader_parameter/wave_direction = Vector2(0, 1)
+shader_parameter/add_color = Color(0.644887, 0.91, 0.4914, 0.85098)

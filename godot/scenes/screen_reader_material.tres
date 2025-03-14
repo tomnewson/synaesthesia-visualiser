@@ -1,0 +1,25 @@
+[gd_resource type="ShaderMaterial" load_steps=5 format=3 uid="uid://ua4rqa7bo2pd"]
+
+[ext_resource type="Shader" path="res://scripts/overlay3d.gdshader" id="1_lqnwe"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_hmpuh"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_n64ke"]
+width = 1920
+height = 1080
+in_3d_space = true
+seamless = true
+noise = SubResource("FastNoiseLite_hmpuh")
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_735qj"]
+viewport_path = NodePath("WavesViewport")
+
+[resource]
+resource_local_to_scene = true
+resource_name = "screenReaderMaterial"
+render_priority = 0
+shader = ExtResource("1_lqnwe")
+shader_parameter/distortion_intensity = 0.0
+shader_parameter/distortion = false
+shader_parameter/distortion_texture = SubResource("NoiseTexture2D_n64ke")
+shader_parameter/waves_buffer = SubResource("ViewportTexture_735qj")

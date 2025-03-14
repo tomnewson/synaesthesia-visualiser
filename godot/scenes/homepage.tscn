@@ -1,0 +1,48 @@
+[gd_scene load_steps=3 format=3 uid="uid://b450gpx5pofl"]
+
+[ext_resource type="Script" path="res://scripts/main_button.gd" id="1_yg2vk"]
+[ext_resource type="Theme" path="res://scenes/button_theme.tres" id="2_akkym"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_yg2vk")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+z_index = -26
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.197937, 0.197937, 0.197937, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 245.0
+offset_right = -235.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 60
+alignment = 1
+
+[node name="MainButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_akkym")
+text = "Multi Track"
+
+[node name="UnderwaterButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_akkym")
+text = "Single Track"
+
+[connection signal="pressed" from="VBoxContainer/MainButton" to="." method="_on_main_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/UnderwaterButton" to="." method="_on_underwater_button_pressed"]

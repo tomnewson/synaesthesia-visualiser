@@ -7,10 +7,12 @@ func test_sigmoid_at_middle():
 	var result = Globals.sigmoid(63.5, 0.0, 127.0)
 	assert_almost_eq(result, 63.5, EPSILON)
 
+# Test that sigmoid returns min at min of range
 func test_sigmoid_at_min():
 	var result = Globals.sigmoid(0.0, 0.0, 127.0)
 	assert_almost_eq(result, 0.0, EPSILON * 10_000)
 
+# Test that sigmoid returns max at max of range
 func test_sigmoid_at_max():
 	var result = Globals.sigmoid(127.0, 0.0, 127.0)
 	assert_almost_eq(result, 127.0, EPSILON * 10_000)
