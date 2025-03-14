@@ -15,6 +15,11 @@ The project includes both Python scripts for audio processing and a Godot-based 
 
 ## Running the Python Scripts
 
+### Dependencies
+
+3. /godot/midi/la_campanella.mid (if not already downloaded, source location is in midi_sources.csv)
+4. /godot/midi/5th-Symphony-Part-1.mid (if not already downloaded, source location is in midi_sources.csv)
+
 ### Single Track Visualiser
 
 To run the single track visualiser:
@@ -33,7 +38,16 @@ cd /path/to/synaesthesia_visualiser
 python python/src/tracks.py
 ```
 
-## Running the Godot Project
+## Running the Godot Project within the Godot Editor
+
+### Dependencies
+
+1. Godot Plugin - GUT (Godot Unit Tests) (found in /godot/addons)
+2. Godot Plugin - Midi Player Addon (ArlezMidiPlayer) (found in /godot/addons)
+3. /godot/midi/la_campanella.mid (if not already downloaded, source location is in midi_sources.csv)
+4. /godot/midi/in_a_mellow_tone_djl.mid (if not already downloaded, source location is in midi_sources.csv)
+5. /godot/data/Aspirin-Stereo.sf2 (if not already downloaded, source location is in sf_sources.csv)
+6. /godot/data/Timbres of Heaven (XGM) 4.00(G).sf2 (if not already downloaded, source location is in sf_sources.csv)
 
 To run the Godot project:
 
