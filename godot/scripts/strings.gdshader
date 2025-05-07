@@ -1,3 +1,11 @@
+/*
+ * This shader is adapted from "Plasma Waves" by scarletshark
+ * Original author: https://www.shadertoy.com/user/scarletshark
+ *
+ * Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License
+ * https://creativecommons.org/licenses/by-nc-sa/3.0/
+ */
+
 shader_type spatial;
 render_mode unshaded, cull_disabled;
 
